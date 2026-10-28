@@ -1,0 +1,35 @@
+{
+  "documents": {
+    "specification": 6,
+    "design": 7,
+    "tests": 6
+  },
+  "coverage": [
+    {
+      "covered": "specification",
+      "covering": "design",
+      "covered_count": 5,
+      "total": 6
+    },
+    {
+      "covered": "design",
+      "covering": "tests",
+      "covered_count": 6,
+      "total": 7
+    }
+  ],
+  "uncovered": [
+    "THS_REQ5",
+    "DES_REQ7"
+  ],
+  "derived": [
+    "DES_REQ6",
+    "DES_REQ7"
+  ],
+  "undefined_references": [
+    {
+      "from": "DES_REQ5",
+      "target": "THS_REQ99"
+    }
+  ]
+}

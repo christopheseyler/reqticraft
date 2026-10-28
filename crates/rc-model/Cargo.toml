@@ -1,0 +1,16 @@
+[package]
+name = "rc-model"
+description = "Modèle de données de ReqtiCraft : projet, types d'analyse, éléments de traçabilité"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[lints]
+workspace = true

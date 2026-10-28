@@ -1,0 +1,21 @@
+[package]
+name = "reqticraft-app"
+description = "Application de bureau ReqtiCraft"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+name = "reqticraft_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde.workspace = true
+
+[lints]
+workspace = true

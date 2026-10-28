@@ -1,0 +1,10 @@
+* text=auto eol=lf
+
+# Fixtures : octets exacts (fins de ligne comprises)
+fixtures/** -text
+*.docx binary
+*.xlsx binary
+*.pdf binary
+*.png binary
+*.ico binary
+*.icns binary

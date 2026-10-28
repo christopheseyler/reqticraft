@@ -1,0 +1,22 @@
+# Rust
+/target/
+
+# Node / UI
+node_modules/
+/app/ui/dist/
+
+# Tauri
+/app/src-tauri/gen/schemas/
+
+# Fichiers produits pendant les tests et les analyses
+*.rcache
+/fixtures/**/intermediate/
+
+# Éditeurs et OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Clean room : aucun fichier Dassault Systèmes dans le dépôt
+*.rqtfimage

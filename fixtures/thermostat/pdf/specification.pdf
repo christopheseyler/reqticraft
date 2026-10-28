@@ -1,0 +1,75 @@
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 3 0 R /Outlines 2 0 R /PageMode /UseOutlines >>
+endobj
+2 0 obj
+<< /Type /Outlines /First 7 0 R /Last 10 0 R /Count 4 >>
+endobj
+3 0 obj
+<< /Type /Pages /Kids [6 0 R] /Count 1 >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Length 1505 >>
+stream
+BT /F1 16 Tf 56 774 Td (1. Spécification du thermostat) Tj ET
+BT /F1 10 Tf 56 760 Td (Document de test ReqtiCraft, créé pour le corpus maison.) Tj ET
+BT /F1 13 Tf 56 737 Td (2. Mesure) Tj ET
+BT /F1 10 Tf 56 723 Td (THS_REQ1 : Mesure de la température) Tj ET
+BT /F1 10 Tf 56 709 Td (Le thermostat doit mesurer la température ambiante toutes les 10 secondes.) Tj ET
+BT /F1 10 Tf 56 695 Td (Priority : High) Tj ET
+BT /F1 10 Tf 56 681 Td (THS_REQ2 : Précision de mesure) Tj ET
+BT /F1 10 Tf 56 667 Td (La précision de mesure doit être meilleure que 0,5 °C entre 5 °C et 35 °C.) Tj ET
+BT /F1 10 Tf 56 653 Td (Priority : High) Tj ET
+BT /F1 13 Tf 56 630 Td (3. Régulation) Tj ET
+BT /F1 10 Tf 56 616 Td (THS_REQ3 : Consigne) Tj ET
+BT /F1 10 Tf 56 602 Td (L'utilisateur doit pouvoir régler une consigne entre 7 °C et 30 °C.) Tj ET
+BT /F1 10 Tf 56 588 Td (Priority : Medium) Tj ET
+BT /F1 10 Tf 56 574 Td (THS_REQ4 : Hystérésis) Tj ET
+BT /F1 10 Tf 56 560 Td (Le chauffage doit être commandé avec une hystérésis de 0,3 °C.) Tj ET
+BT /F1 10 Tf 56 546 Td (Priority : Medium) Tj ET
+BT /F1 10 Tf 56 532 Td (THS_REQ5 : Mode absence) Tj ET
+BT /F1 10 Tf 56 518 Td (Un mode absence doit abaisser la consigne de 3 °C.) Tj ET
+BT /F1 10 Tf 56 504 Td (Priority : Low) Tj ET
+BT /F1 13 Tf 56 481 Td (4. Connectivité) Tj ET
+BT /F1 10 Tf 56 467 Td (THS_REQ6 : Pilotage à distance) Tj ET
+BT /F1 10 Tf 56 453 Td (La consigne doit pouvoir être modifiée depuis une application mobile.) Tj ET
+BT /F1 10 Tf 56 439 Td (Priority : Low) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 3 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Title (1. Spécification du thermostat) /Parent 2 0 R /Next 8 0 R /Dest [6 0 R /XYZ 0 794 0] >>
+endobj
+8 0 obj
+<< /Title (2. Mesure) /Parent 2 0 R /Prev 7 0 R /Next 9 0 R /Dest [6 0 R /XYZ 0 757 0] >>
+endobj
+9 0 obj
+<< /Title (3. Régulation) /Parent 2 0 R /Prev 8 0 R /Next 10 0 R /Dest [6 0 R /XYZ 0 650 0] >>
+endobj
+10 0 obj
+<< /Title (4. Connectivité) /Parent 2 0 R /Prev 9 0 R /Dest [6 0 R /XYZ 0 501 0] >>
+endobj
+xref
+0 11
+0000000000 65535 f 
+0000000015 00000 n 
+0000000103 00000 n 
+0000000175 00000 n 
+0000000232 00000 n 
+0000000329 00000 n 
+0000001885 00000 n 
+0000002011 00000 n 
+0000002125 00000 n 
+0000002230 00000 n 
+0000002340 00000 n 
+trailer
+<< /Size 11 /Root 1 0 R >>
+startxref
+2440
+%%EOF

@@ -1,0 +1,76 @@
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 3 0 R /Outlines 2 0 R /PageMode /UseOutlines >>
+endobj
+2 0 obj
+<< /Type /Outlines /First 7 0 R /Last 10 0 R /Count 4 >>
+endobj
+3 0 obj
+<< /Type /Pages /Kids [6 0 R] /Count 1 >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Length 1620 >>
+stream
+BT /F1 16 Tf 56 774 Td (1. Conception du thermostat) Tj ET
+BT /F1 10 Tf 56 760 Td (Document de test ReqtiCraft, créé pour le corpus maison.) Tj ET
+BT /F1 13 Tf 56 737 Td (2. Acquisition) Tj ET
+BT /F1 10 Tf 56 723 Td (DES_REQ1 : Échantillonnage du capteur) Tj ET
+BT /F1 10 Tf 56 709 Td (Le capteur est lu par interruption toutes les 10 s.) Tj ET
+BT /F1 10 Tf 56 695 Td ([Covers: THS_REQ1]) Tj ET
+BT /F1 10 Tf 56 681 Td (DES_REQ2 : Étalonnage) Tj ET
+BT /F1 10 Tf 56 667 Td (Une table d'étalonnage en 16 points corrige la non-linéarité du capteur.) Tj ET
+BT /F1 10 Tf 56 653 Td ([Covers: THS_REQ2]) Tj ET
+BT /F1 13 Tf 56 630 Td (3. Régulateur) Tj ET
+BT /F1 10 Tf 56 616 Td (DES_REQ3 : Bornes de consigne) Tj ET
+BT /F1 10 Tf 56 602 Td (La consigne est saturée entre 7 °C et 30 °C.) Tj ET
+BT /F1 10 Tf 56 588 Td ([Covers: THS_REQ3]) Tj ET
+BT /F1 10 Tf 56 574 Td (DES_REQ4 : Commande tout-ou-rien) Tj ET
+BT /F1 10 Tf 56 560 Td (Le relais est commandé avec un seuil haut et un seuil bas.) Tj ET
+BT /F1 10 Tf 56 546 Td ([Covers: THS_REQ4]) Tj ET
+BT /F1 10 Tf 56 532 Td (DES_REQ5 : API de consigne) Tj ET
+BT /F1 10 Tf 56 518 Td (Une API REST expose la lecture et l'écriture de la consigne.) Tj ET
+BT /F1 10 Tf 56 504 Td ([Covers: THS_REQ6, THS_REQ99]) Tj ET
+BT /F1 13 Tf 56 481 Td (4. Exigences dérivées) Tj ET
+BT /F1 10 Tf 56 467 Td (DES_REQ6 : Chien de garde) Tj ET
+BT /F1 10 Tf 56 453 Td (Un chien de garde redémarre le microcontrôleur après 2 s sans activité.) Tj ET
+BT /F1 10 Tf 56 439 Td (DES_REQ7 : Journal d'erreurs) Tj ET
+BT /F1 10 Tf 56 425 Td (Les 100 dernières erreurs sont conservées en mémoire non volatile.) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 3 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Title (1. Conception du thermostat) /Parent 2 0 R /Next 8 0 R /Dest [6 0 R /XYZ 0 794 0] >>
+endobj
+8 0 obj
+<< /Title (2. Acquisition) /Parent 2 0 R /Prev 7 0 R /Next 9 0 R /Dest [6 0 R /XYZ 0 757 0] >>
+endobj
+9 0 obj
+<< /Title (3. Régulateur) /Parent 2 0 R /Prev 8 0 R /Next 10 0 R /Dest [6 0 R /XYZ 0 650 0] >>
+endobj
+10 0 obj
+<< /Title (4. Exigences dérivées) /Parent 2 0 R /Prev 9 0 R /Dest [6 0 R /XYZ 0 501 0] >>
+endobj
+xref
+0 11
+0000000000 65535 f 
+0000000015 00000 n 
+0000000103 00000 n 
+0000000175 00000 n 
+0000000232 00000 n 
+0000000329 00000 n 
+0000002000 00000 n 
+0000002126 00000 n 
+0000002237 00000 n 
+0000002347 00000 n 
+0000002457 00000 n 
+trailer
+<< /Size 11 /Root 1 0 R >>
+startxref
+2563
+%%EOF

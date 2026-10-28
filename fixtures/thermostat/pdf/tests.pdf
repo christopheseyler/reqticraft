@@ -1,0 +1,70 @@
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 3 0 R /Outlines 2 0 R /PageMode /UseOutlines >>
+endobj
+2 0 obj
+<< /Type /Outlines /First 7 0 R /Last 9 0 R /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Pages /Kids [6 0 R] /Count 1 >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Length 1354 >>
+stream
+BT /F1 16 Tf 56 774 Td (1. Plan de tests du thermostat) Tj ET
+BT /F1 10 Tf 56 760 Td (Document de test ReqtiCraft, créé pour le corpus maison.) Tj ET
+BT /F1 13 Tf 56 737 Td (2. Tests unitaires) Tj ET
+BT /F1 10 Tf 56 723 Td (TST_REQ1 : Période d'échantillonnage) Tj ET
+BT /F1 10 Tf 56 709 Td (Vérifier 6 lectures par minute.) Tj ET
+BT /F1 10 Tf 56 695 Td ([Covers: DES_REQ1]) Tj ET
+BT /F1 10 Tf 56 681 Td (TST_REQ2 : Table d'étalonnage) Tj ET
+BT /F1 10 Tf 56 667 Td (Comparer 16 points à une sonde de référence.) Tj ET
+BT /F1 10 Tf 56 653 Td ([Covers: DES_REQ2]) Tj ET
+BT /F1 10 Tf 56 639 Td (TST_REQ3 : Saturation) Tj ET
+BT /F1 10 Tf 56 625 Td (Envoyer 5 °C et 35 °C, vérifier 7 °C et 30 °C.) Tj ET
+BT /F1 10 Tf 56 611 Td ([Covers: DES_REQ3]) Tj ET
+BT /F1 10 Tf 56 597 Td (TST_REQ4 : Seuils du relais) Tj ET
+BT /F1 10 Tf 56 583 Td (Balayer la température autour de la consigne.) Tj ET
+BT /F1 10 Tf 56 569 Td ([Covers: DES_REQ4]) Tj ET
+BT /F1 13 Tf 56 546 Td (3. Tests d'intégration) Tj ET
+BT /F1 10 Tf 56 532 Td (TST_REQ5 : API REST) Tj ET
+BT /F1 10 Tf 56 518 Td (Lire puis écrire la consigne par l'API.) Tj ET
+BT /F1 10 Tf 56 504 Td ([Covers: DES_REQ5]) Tj ET
+BT /F1 10 Tf 56 490 Td (TST_REQ6 : Chien de garde) Tj ET
+BT /F1 10 Tf 56 476 Td (Bloquer la boucle principale, vérifier le redémarrage.) Tj ET
+BT /F1 10 Tf 56 462 Td ([Covers: DES_REQ6]) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 3 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Title (1. Plan de tests du thermostat) /Parent 2 0 R /Next 8 0 R /Dest [6 0 R /XYZ 0 794 0] >>
+endobj
+8 0 obj
+<< /Title (2. Tests unitaires) /Parent 2 0 R /Prev 7 0 R /Next 9 0 R /Dest [6 0 R /XYZ 0 757 0] >>
+endobj
+9 0 obj
+<< /Title (3. Tests d'intégration) /Parent 2 0 R /Prev 8 0 R /Dest [6 0 R /XYZ 0 566 0] >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000015 00000 n 
+0000000103 00000 n 
+0000000174 00000 n 
+0000000231 00000 n 
+0000000328 00000 n 
+0000001733 00000 n 
+0000001859 00000 n 
+0000001973 00000 n 
+0000002087 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+2193
+%%EOF

@@ -1,0 +1,13 @@
+[package]
+name = "rc-analysis"
+description = "Résolution des références, couverture, impact, règles et filtres"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+rc-model.workspace = true
+
+[lints]
+workspace = true

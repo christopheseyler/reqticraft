@@ -1,0 +1,46 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/rc-model",
+    "crates/rc-interop",
+    "crates/rc-convert",
+    "crates/rc-capture",
+    "crates/rc-analysis",
+    "crates/rc-snapshot",
+    "crates/rc-report",
+    "crates/rc-plugin",
+    "crates/rc-cli",
+    "app/src-tauri",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+
+[workspace.dependencies]
+rc-model = { path = "crates/rc-model" }
+rc-interop = { path = "crates/rc-interop" }
+rc-convert = { path = "crates/rc-convert" }
+rc-capture = { path = "crates/rc-capture" }
+rc-analysis = { path = "crates/rc-analysis" }
+rc-snapshot = { path = "crates/rc-snapshot" }
+rc-report = { path = "crates/rc-report" }
+rc-plugin = { path = "crates/rc-plugin" }
+
+anyhow = "1"
+clap = { version = "4.5", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

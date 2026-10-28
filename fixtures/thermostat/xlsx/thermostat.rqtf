@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+<Document name="Spécification" positionX="800" positionY="400" type="Excel" path="specification.xlsx">
+</Document>
+<Document name="Conception" positionX="1500" positionY="1000" type="Excel" path="design.xlsx">
+</Document>
+<Document name="Tests" positionX="2200" positionY="1600" type="Excel" path="tests.xlsx">
+</Document>
+<Cover outputDocument="Spécification" positionX="0" positionY="0">
+<InputDocument name="Conception" />
+</Cover>
+<Cover outputDocument="Conception" positionX="0" positionY="0">
+<InputDocument name="Tests" />
+</Cover>
+</Project>

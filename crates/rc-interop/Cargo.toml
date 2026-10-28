@@ -1,0 +1,13 @@
+[package]
+name = "rc-interop"
+description = "Lecture et écriture des formats Reqtify (.rqtf, .types, .filters, .marks)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+rc-model.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,18 @@
+[package]
+name = "rc-cli"
+description = "Interface en ligne de commande de ReqtiCraft"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "reqticraft"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+
+[lints]
+workspace = true
