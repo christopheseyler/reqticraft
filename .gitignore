@@ -3,7 +3,7 @@
 
 # Node / UI
 node_modules/
-/app/ui/dist/
+/app/dist/
 
 # Tauri
 /app/src-tauri/gen/schemas/
