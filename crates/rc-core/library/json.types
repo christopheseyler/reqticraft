@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Types ReqtiCraft pour JSON (transformé en XML : object, array, string…) et XML.
+     Convention JSON : objets {"id", "label", "text", "priority", "covers": [...]} à
+     n'importe quelle profondeur. -->
+<Types coupling="JSON">
+<DocumentType name="JSON" kind="xml" convertTool="json" description="JSON : objets avec id, label, text, priority et covers">
+<FileExtension value="json" />
+<ElementType name="Requirement" elementClass="Requirement" analysisTree="&lt;object&gt;&lt;string name='^id$'&gt;$i&lt;/string&gt;&lt;string name='^label$'&gt;$l$o&lt;/string&gt;&lt;string name='^text$'&gt;$t$o&lt;/string&gt;&lt;/object&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" analysisTree="&lt;array name='^covers$'&gt;&lt;string&gt;$i&lt;/string&gt;&lt;/array&gt;" />
+<ElementType name="Priority" elementClass="Attribute" analysisTree="&lt;object&gt;&lt;string name='^id$'&gt;&lt;/string&gt;&lt;string name='^priority$'&gt;$i&lt;/string&gt;&lt;/object&gt;">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+</DocumentType>
+<DocumentType name="XML" kind="xml" convertTool="xml" description="XML générique : &lt;requirement id label&gt; et &lt;covers ref&gt;, à dupliquer pour ses propres balises">
+<FileExtension value="xml" />
+<ElementType name="Requirement" elementClass="Requirement" analysisTree="&lt;requirement id='$i' label='$l$o'&gt;&lt;/requirement&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" analysisTree="&lt;covers ref='$i'&gt;&lt;/covers&gt;" />
+</DocumentType>
+</Types>

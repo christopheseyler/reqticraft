@@ -9,6 +9,7 @@ members = [
     "crates/rc-snapshot",
     "crates/rc-report",
     "crates/rc-plugin",
+    "crates/rc-core",
     "crates/rc-cli",
     "app/src-tauri",
 ]
@@ -28,6 +29,7 @@ rc-analysis = { path = "crates/rc-analysis" }
 rc-snapshot = { path = "crates/rc-snapshot" }
 rc-report = { path = "crates/rc-report" }
 rc-plugin = { path = "crates/rc-plugin" }
+rc-core = { path = "crates/rc-core" }
 
 anyhow = "1"
 clap = { version = "4.5", features = ["derive"] }

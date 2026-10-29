@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Type ReqtiCraft pour le code source : un répertoire, une section par sous-répertoire
+     et par fichier ; références dans les commentaires « // Implements REQ1 »,
+     « # Covers: REQ1, REQ2 » ou « [Covers: REQ1] ». -->
+<Types coupling="Code">
+<DocumentType name="Code" convertTool="Code" editTool="Code" description="Code source : références dans les commentaires (Implements, Covers, Satisfies, Verifies)">
+<MatchingFileName value="*.c" />
+<MatchingFileName value="*.h" />
+<MatchingFileName value="*.cpp" />
+<MatchingFileName value="*.hpp" />
+<MatchingFileName value="*.cc" />
+<MatchingFileName value="*.cs" />
+<MatchingFileName value="*.java" />
+<MatchingFileName value="*.kt" />
+<MatchingFileName value="*.py" />
+<MatchingFileName value="*.js" />
+<MatchingFileName value="*.ts" />
+<MatchingFileName value="*.rs" />
+<MatchingFileName value="*.go" />
+<MatchingFileName value="*.adb" />
+<MatchingFileName value="*.ads" />
+<MatchingFileName value="*.vhd" />
+<MatchingFileName value="*.v" />
+<ExcludedFileName value="*.git*" />
+<ExcludedFileName value="*.svn*" />
+<ElementType name="Directory" elementClass="Section" regularExpression="^BEGIN_DIRECTORY: (.+):(.+)$" endExpression="^END_DIRECTORY: (.+)$" index1="2" index2="1" />
+<ElementType name="File" elementClass="Section" regularExpression="^BEGIN_FILE: (.+):(.+)$" endExpression="^END_FILE: (.+)$" index1="2" index2="1">
+<ParentType name="Code" />
+<ParentType name="Directory" />
+</ElementType>
+<ElementType name="Comment Reference" elementClass="CoverLink" printExpression="// Implements $i" regularExpression="(?://|#|--|/\*|^[ \t]*\*)[ \t]*(?:@?Implements|Covers|Satisfies|Verifies)\b[ \t]*:?[ \t]*([^\s,;*\]]+(?:[ \t]*[,;][ \t]*[^\s,;*\]]+)*)" subExpression="([^,;\s]+)" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" regularExpression="\[Covers[ \t]*:[ \t]*([^\]]*)\]" subExpression="([^,;\s]+)" />
+</DocumentType>
+</Types>

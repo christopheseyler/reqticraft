@@ -31,5 +31,25 @@
       "from": "DES_REQ5",
       "target": "THS_REQ99"
     }
-  ]
+  ],
+  "partial": {
+    "code/thermostat.rqtf": {
+      "Conception": [
+        5,
+        7
+      ]
+    },
+    "json/thermostat.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    },
+    "composite/thermostat.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    }
+  }
 }

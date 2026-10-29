@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Type ReqtiCraft pour Word (.docx). L'intermédiaire a une ligne par paragraphe :
+     « style<TAB>texte ». Exigences : style Requirement_ID « REQ12 : libellé » ;
+     texte : style Requirement_Text ; références « [Covers: …] » dans n'importe quel style. -->
+<Types coupling="Word">
+<DocumentType name="Word" convertTool="WordWithStyles" editTool="WordWithStyles" description="Word : titres (styles Heading), exigences en style Requirement_ID, texte en style Requirement_Text">
+<FileExtension value="docx" />
+<FileExtension value="docm" />
+<Variable name="withCharacterStyles" label="Styles de caractères" type="boolean" />
+<ElementType name="Heading 1" elementClass="Section" regularExpression="^[Hh]eading 1\t(?:(\d+(?:\.\d+)*)\.?[ \t]+)?(.+)$" />
+<ElementType name="Heading 2" elementClass="Section" regularExpression="^[Hh]eading 2\t(?:(\d+(?:\.\d+)*)\.?[ \t]+)?(.+)$">
+<ParentType name="Heading 1" />
+</ElementType>
+<ElementType name="Heading 3" elementClass="Section" regularExpression="^[Hh]eading 3\t(?:(\d+(?:\.\d+)*)\.?[ \t]+)?(.+)$">
+<ParentType name="Heading 2" />
+</ElementType>
+<ElementType name="Heading 4" elementClass="Section" regularExpression="^[Hh]eading 4\t(?:(\d+(?:\.\d+)*)\.?[ \t]+)?(.+)$">
+<ParentType name="Heading 3" />
+</ElementType>
+<ElementType name="Macro-requirement" elementClass="MacroRequirement" isNested="true" regularExpression="\[MacroReq_([^\]]+)\]?" endExpression="\[End_of_MacroReq\]" />
+<ElementType name="Requirement" elementClass="Requirement" regularExpression="^Requirement_ID\t[ \t]*([^\s:]+)(?:[ \t]*:[ \t]*(.*\S))?[ \t]*$" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" regularExpression="\[Covers[ \t]*:[ \t]*([^\]]*)\]" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" printExpression="Priority : $i" regularExpression="^[^\t\n]*\t[ \t]*Priority[ \t]*:[ \t]*(\S+)">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+<TerminalType name="Text" elementClass="Text" regularExpression="^Requirement_Text\t(.+)$" />
+</DocumentType>
+</Types>

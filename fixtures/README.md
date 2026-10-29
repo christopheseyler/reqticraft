@@ -27,5 +27,14 @@ Cas volontairement présents (détail dans `thermostat/expected.json`) :
 - `DES_REQ5` référence `THS_REQ99`, qui n'existe pas ;
 - couverture attendue : spécification 5/6 (83 %), conception 6/7 (86 %).
 
+Projets complémentaires :
+
+| Projet | Contenu | Attendu |
+|---|---|---|
+| `xlsx/thermostat-xml.rqtf` | mêmes tableurs, type `ExcelXML` (arbres d'analyse) | comme ci-dessus |
+| `code/thermostat.rqtf` | conception couverte par `code/src` (C, en-tête, Python ; `notes.txt` ignoré) | conception 5/7 |
+| `json/thermostat.rqtf` | spécification en JSON couverte par la conception | spécification 5/6 |
+| `composite/thermostat.rqtf` | sous-projet « Fournisseur » dont la spécification est remplacée par celle du projet | spécification 5/6 |
+
 Le PDF n'utilise que du texte positionné et des signets : aucun style de paragraphe. Les lignes y
 sont fusionnées par les extracteurs naïfs, ce qui teste la reconstitution des paragraphes.

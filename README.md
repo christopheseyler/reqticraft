@@ -7,7 +7,33 @@ ReqtiCraft capture les exigences et leurs références directement dans les docu
 la couverture et l'analyse d'impact, contrôle des règles de cohérence et produit des rapports. Il sait
 importer les projets Reqtify existants.
 
-> État : étape **M0** (fondations). Rien n'est encore fonctionnel côté analyse.
+> État : connecteurs **P0** disponibles en ligne de commande (texte, Word docx, tableurs, PDF, code
+> source, JSON, XML, projets composites). L'interface graphique n'est pas encore branchée.
+
+## Utilisation
+
+```bash
+cargo run -p rc-cli -- analyze fixtures/thermostat/docx/thermostat.rqtf
+```
+
+```bash
+cargo run -p rc-cli -- analyze projet.rqtf --details --json resultat.json --fail-on error
+```
+
+```bash
+cargo run -p rc-cli -- import projet.rqtf
+```
+
+```bash
+cargo run -p rc-cli -- types test exigences.docx
+```
+
+```bash
+cargo run -p rc-cli -- convert exigences.pdf
+```
+
+Pour réutiliser une bibliothèque de types existante (par exemple le répertoire `config` d'une
+installation Reqtify), ajouter `--config <répertoire>`.
 
 ## Documentation
 

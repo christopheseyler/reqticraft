@@ -1,0 +1,41 @@
+{
+  "title": "Spécification du thermostat",
+  "requirements": [
+    {
+      "id": "THS_REQ1",
+      "label": "Mesure de la température",
+      "text": "Le thermostat doit mesurer la température ambiante toutes les 10 secondes.",
+      "priority": "High"
+    },
+    {
+      "id": "THS_REQ2",
+      "label": "Précision de mesure",
+      "text": "La précision de mesure doit être meilleure que 0,5 °C entre 5 °C et 35 °C.",
+      "priority": "High"
+    },
+    {
+      "id": "THS_REQ3",
+      "label": "Consigne",
+      "text": "L'utilisateur doit pouvoir régler une consigne entre 7 °C et 30 °C.",
+      "priority": "Medium"
+    },
+    {
+      "id": "THS_REQ4",
+      "label": "Hystérésis",
+      "text": "Le chauffage doit être commandé avec une hystérésis de 0,3 °C.",
+      "priority": "Medium"
+    },
+    {
+      "id": "THS_REQ5",
+      "label": "Mode absence",
+      "text": "Un mode absence doit abaisser la consigne de 3 °C.",
+      "priority": "Low"
+    },
+    {
+      "id": "THS_REQ6",
+      "label": "Pilotage à distance",
+      "text": "La consigne doit pouvoir être modifiée depuis une application mobile.",
+      "priority": "Low"
+    }
+  ]
+}

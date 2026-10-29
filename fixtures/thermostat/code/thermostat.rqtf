@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+<Document name="Conception" positionX="800" positionY="400" type="Text" path="../text/design.txt">
+</Document>
+<Document name="Code" positionX="1500" positionY="1000" type="Code" path="src">
+</Document>
+<Cover outputDocument="Conception" positionX="0" positionY="0">
+<InputDocument name="Code" />
+</Cover>
+</Project>

@@ -254,9 +254,21 @@ proposé : un moteur compatible PCRE2.
 
 **`index1..index4`** (XML) et **`Indexes=a,b,c,d`** (INI) : affectation des groupes de capture aux
 rôles (identifiant, libellé, texte, GUID, parent, profondeur) **[DOC]** CG « Defining element type ».
-L'ordre exact et le sens de la valeur `0` sont **[INF]**. Exemples observés : `Indexes=1,2,1,0` sur
-`^Heading 1\t(?:([\d\.]+)[ \t](.+)|([^\d\n].+))$`, et `index1="1" index2="3" index3="3" index4="0"`
-sur `(REQ\w+)\n(.+)`. *À établir en boîte noire avec le testeur d'expressions de l'outil.*
+Lecture retenue **[EX fort]** : le k-ième nombre est le **rôle du k-ième groupe**, avec les codes
+0 aucun, 1 identifiant, 2 libellé, 3 texte, 6 profondeur. Preuves :
+
+- `Office\word.types`, type `Word` : `Section1=^[Hh]eading (\d+)\t(?:([\d\.]+)[ \t](.*)|([^\d\n].+))$`
+  avec `Section1Indexes=6,1,2,1`. Le groupe 1 est le niveau du titre (profondeur = 6), le groupe 2 le
+  numéro (identifiant = 1), le groupe 3 le titre (libellé = 2), le groupe 4 le titre sans numéro
+  (identifiant = 1). C'est le seul découpage cohérent de cette expression.
+- `Indexes=1,2,1,0` sur `^Heading 1\t(?:([\d\.]+)[ \t](.+)|([^\d\n].+))$` : numéro, titre, titre
+  sans numéro ; le 4e code (0) vise un groupe inexistant.
+- `index1="1" index2="3"` sur `(REQ\w+)\n(.+)` : identifiant puis texte sur la ligne suivante.
+
+Les codes 4 (GUID) et 5 (parent) sont supposés suivre l'ordre du menu de l'éditeur, sans exemple
+**[INF]**. Une section capturée avec une profondeur s'imbrique sous la dernière section ouverte de
+profondeur inférieure ; c'est ainsi que ReqtiCraft retrouve la hiérarchie des titres du type `Word`
+de Reqtify (vérifié sur l'exemple Word, voir §11).
 
 ### 4.2 Arbres d'analyse XML (`@analysisTree`)
 
@@ -275,9 +287,26 @@ Ce que l'on lit dans les exemples et le guide **[DOC]** CG « Analysis Tab » (X
 - options : « Negative » (le sous-arbre doit être absent), « Reference » (point de départ pour
   plusieurs correspondances), « Ignore tag nesting ».
 
-Le codage exact des marqueurs autres que `$i`, `$l` et `$t` (par exemple `$o`, sans doute « optionnel »)
-est **[INF]**. *À compléter en recensant tous les `analysisTree` des 42 fichiers XML, puis en vérifiant
-en boîte noire.*
+Recensement des marqueurs dans les `analysisTree` de la bibliothèque livrée **[EX]**, et sens retenu
+d'après leur contexte **[INF]** (sauf `$i`, `$l`, `$t`, documentés) :
+
+| Marqueur | Occurrences | Contexte typique | Sens retenu |
+|---|---|---|---|
+| `$i` | 487 | `name='$i'`, `<value>$i</value>` | identifiant, valeur ou cible |
+| `$u` | 167 | `externalId='$u'`, `uuid='$u'` | GUID |
+| `$l` | 164 | `referenceName='$l'` | libellé |
+| `$t` | 74 | `<field isContent='true'><value>$t…` | texte |
+| `$o` | 63 | `<Attribute …>$o</Attribute>` | nœud facultatif |
+| `$p` | 47 | `<Relation targetUuid='$p' …>` | parent ou source |
+| `$g` | 13 | `<PNGImage>$g</PNGImage>` | image |
+| `$r` | 10 | `<Implemented m1Id='$i'>$r</Implemented>` | point de départ « Reference » |
+| `$h` | 5 | `<value>$t$h</value>` | contenu riche (HTML) |
+| `$c` | 2 | `<h2>$l$c</h2>` | inconnu |
+| `$!` | — | `<value>$!<div>…</div></value>` | sous-arbre « Negative » |
+
+ReqtiCraft implémente `$i $l $t $u $p $o $!` et accepte les autres sans effet. Les noms de balises
+préfixés (`ds:artifact`, `rrm:identifier`) sont comparés sur leur nom local, sans déclaration
+d'espace de noms. Un `subExpression` découpe la valeur capturée d'une référence en plusieurs cibles.
 
 ### 4.3 Format INI des types
 
@@ -328,8 +357,8 @@ intermédiaires compatibles, faute de quoi les expressions des types existants n
 | Convertisseur | Format de ligne | Preuve |
 |---|---|---|
 | Texte (`text`, `BasicConnector`) | Le fichier lui-même | [EX] `EX\Coupling\Text\*.txt` avec `Office\text.types` |
-| Word (`WordWithStyles`) | `<style Word><TAB><numérotation><séparateur><texte>`. Tableaux : `#TABLE`, puis des lignes `#TR|<col> <style> <texte>|<col> …`, plusieurs paragraphes d'une cellule sur la même ligne. Images : `<Picture<HEX…>Picture>`. Styles de caractères : ligne supplémentaire `<style car.> <texte>`. Annotations : `Annot_<user>_<n>/…/End_Annot_…`. Le nom de style est le nom anglais d'origine (pas l'alias). | [DOC] Word Coupling Notes « Intermediate Txt File » ; [EX] `Office\word.types` (`^Heading 1\t…`, `^Requirement_ID\t…`) |
-| Excel (`ExcelWithColNumbers`) | `Worksheet : <nom>`, puis par ligne `|<col> <texte>` répété (séparés par une tabulation), `BeginTextZone_<id>:` … `EndTextZone_<id>`, fin : `End_of_Conversion`. Les dates antérieures à 1970 sont omises. | [DOC] Excel Coupling Notes ; [EX] `Office\excel.types` |
+| Word (`WordWithStyles`) | `<style Word><TAB><numérotation><séparateur><texte>`. Tableaux : `#TABLE`, puis des lignes `#TR|<col> <style> <texte>|<col> …`, plusieurs paragraphes d'une cellule sur la même ligne. Images : `<Picture<HEX…>Picture>`. Styles de caractères : ligne supplémentaire `<style car.> <texte>`. Annotations : `Annot_<user>_<n>/…/End_Annot_…`. Le nom de style est le nom anglais d'origine (pas l'alias). Les espaces insécables deviennent des espaces : le document de l'exemple Word, annoncé conforme au type par défaut, sépare `REQ2` de `:` par U+00A0, que l'expression du type (`[ \t]*\:`) refuse. | [DOC] Word Coupling Notes « Intermediate Txt File » ; [EX] `Office\word.types` (`^Heading 1\t…`, `^Requirement_ID\t…`) ; [EX] `Examples\Coupling\Word\Word demo doc.docx` |
+| Excel (`ExcelWithColNumbers`) | `Worksheet : <nom>`, puis par ligne `|<col> <texte>` répété (séparés par une tabulation), `BeginTextZone_<id>:` … `EndTextZone_<id>`, fin : `End_of_Conversion`. Les dates antérieures à 1970 sont omises. ReqtiCraft écrit la référence de cellule (`|A2 REQ1`) : le type livré accepte `\|\w+ ` et son attribut `Position` capture `\|([A-Z]+\d+) ` ; d'autres expressions acceptent aussi un numéro seul (`\|(?:D\d+|4) `) **[INF]**. | [DOC] Excel Coupling Notes ; [EX] `Office\excel.types` |
 | PDF (`PaDaFix`) | Proche de l'intermédiaire Word : `<style> <texte>` quand l'option « styles » est active (nom de police sans préfixe de sous-ensemble, par exemple `Calibri-Italic`), `Heading X` pour les titres issus des signets. Tableaux : `#TABLE`, puis `#TR|<col> <texte>|<col> …`. Images : pseudo-style `Picture` suivi de `<Picture<<doc>_data\<image>.png>Picture>`. Annotations : `Annot_<user>/<contenu>/<texte surligné>/End_Annot_<user>/…`. Paragraphes reconstitués et césures supprimées. Intermédiaire écrit dans le sous-répertoire `intermediate` du projet. L'ancien convertisseur `PdfCvTxt` (types « PDF Old ») utilise une syntaxe différente. Variante « propriétés » : intermédiaire XML. | [DOC] PDF Coupling Notes « Intermediate File », « From PdfCvTxt to PaDaFix », « Capturing PDF Annotations » ; [EX] `Office\PaDaFix.types` (`^(?:[^\t]+\t|)(REQ\d+)`, `^Annot[^/]+/(REQ[\w\-]+)…/End_Annot`) |
 | Excel XML (`ExcelXML`) | `<Worksheet name=…><Row><Cell col=…>…` | [DOC] ; [EX] |
 | Multitype | Lignes `BEGIN_DIRECTORY: <label>:<chemin>`, `BEGIN_FILE:`, `END_FILE:`, `END_DIRECTORY:` (texte) ; `<Dir label path>` et `<File label path>` (XML) | [DOC] CG « Customizing Multitypes » ; [EX] `word.types` (Multi Word) |
@@ -474,7 +503,7 @@ n'est nécessaire.
 |---|---|---|
 | Q1 | Syntaxe XML et INI des **dossiers**, canaux **miroir** et **dépendance**, **annotations**, catégories de canal, mot de passe | Créer chaque objet dans l'éditeur de projet, enregistrer dans les deux formats, comparer. |
 | Q2 | Couverture **OU** combinée : un `Cover` avec plusieurs `InputDocument` ? | Créer un canal combiné, enregistrer. |
-| Q3 | Sémantique de `Indexes` / `index1..4` | Affecter les rôles dans le testeur d'expressions, enregistrer, comparer. |
+| Q3 | Codes 4 et 5 de `Indexes` / `index1..4` (1, 2, 3 et 6 établis, voir §4.1) | Affecter les rôles GUID et parent dans le testeur d'expressions, enregistrer, comparer. |
 | Q4 | Marqueurs d'`analysisTree` (`$o`, GUID, parent, cible…) | Cocher chaque rôle dans l'éditeur XML, enregistrer. |
 | Q5 | Sens des 16 `Booleans` et identifiants des opérateurs de filtre | Basculer chaque option et chaque opérateur, enregistrer. |
 | Q6 | Format exact des intermédiaires Word et Excel (numérotation, séparateur, échappements) | Option « Intermediate File » sur un corpus maison couvrant tous les cas. |
@@ -484,3 +513,26 @@ n'est nécessaire.
 
 Les résultats seront consignés dans `docs/interop-evidence/` (fichiers produits + note datée), avec
 l'étiquette **[BB]** (boîte noire).
+
+## 11. Validation de l'implémentation (2026-10-28)
+
+État de `rc-interop` et du moteur, mesuré sur le corpus livré (test local
+`crates/rc-core/tests/reqtify_examples.rs`, avec `--config` sur le répertoire `config` de Reqtify) :
+
+- **Lecture** : les 50 `.rqtf` (33 INI, 17 XML), les 89 `.types` (y compris `CsvXML Demo.types`,
+  XML invalide avec des `<` bruts dans un attribut, que l'outil d'origine accepte), les `.filters`,
+  `.marks` et documents de modification se lisent sans erreur.
+- **Analyse avec les types de Reqtify** :
+
+  | Exemple | Résultat ReqtiCraft | Attendu (contenu des documents) |
+  |---|---|---|
+  | `Coupling/Text/Text demo.rqtf` | 5 exigences, couverture 3/5 (60 %) | REQ1 à REQ5 ; REQ1, REQ2, REQ3 couvertes |
+  | `Coupling/Word/Word Demo.rqtf` (docx) | 5 exigences avec attributs, titres imbriqués | 5 exigences annoncées |
+  | `Coupling/Excel/Excel Demo.rqtf` | 5 exigences | 5 |
+  | `Coupling/Excel/ExcelXML Demo.rqtf` | 5 exigences | 5 |
+  | `Coupling/PDF/PDF Demo.rqtf` | 5 exigences | 5 |
+
+- **Hors périmètre P0** (message explicite, pas d'échec) : documents Word 97-2003 `.doc`
+  (`conversionProblem`, la majorité des exemples « Use Cases »), et convertisseurs propriétaires
+  (`CScan` pour l'analyse syntaxique C/Java, `DoorsXML`, `FrameMaker`, `CSVtoXML`, `Word2Xml`…,
+  règle `unknownConvertMethod`).

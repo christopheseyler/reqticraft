@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Types ReqtiCraft pour les tableurs (xlsx, xls, ods, csv). Colonnes par défaut :
+     A identifiant, B libellé, C texte, D Priority, E Owner ; références « [Covers: …] »
+     dans n'importe quelle cellule. -->
+<Types coupling="Excel">
+<DocumentType name="Excel" convertTool="ExcelWithColNumbers" editTool="Excel" description="Tableur : une exigence par ligne (A identifiant, B libellé, C texte, D priorité, E responsable)">
+<FileExtension value="xlsx" />
+<FileExtension value="xlsm" />
+<FileExtension value="xls" />
+<FileExtension value="ods" />
+<FileExtension value="csv" />
+<ElementType name="Worksheet" elementClass="Section" regularExpression="^Worksheet :[ \t](.+)$" />
+<ElementType name="Requirement" elementClass="Requirement" regularExpression="^\|A\d+ ([\w\-]*\d)(?=\t|$)(?:\t\|B\d+ ([^\t\n]+))?" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" regularExpression="\[Covers[ \t]*:[ \t]*([^\]]*)\]" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" printExpression="Priority : $i" regularExpression="^\|A\d+ [\w\-]*\d(?=\t|$).*?\t\|D\d+ ([^\t\n]+)">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+<ElementType name="Owner" elementClass="Attribute" printExpression="Owner : $i" regularExpression="^\|A\d+ [\w\-]*\d(?=\t|$).*?\t\|E\d+ ([^\t\n]+)" />
+<TerminalType name="Text" elementClass="Text" regularExpression="^\|A\d+ [\w\-]*\d(?=\t|$).*?\t\|C\d+ ([^\t\n]+)" />
+</DocumentType>
+<DocumentType name="ExcelXML" kind="xml" convertTool="ExcelXML" editTool="Excel" description="Tableur analysé en XML (mêmes colonnes que le type Excel)">
+<FileExtension value="xlsx" />
+<FileExtension value="xlsm" />
+<FileExtension value="xls" />
+<FileExtension value="ods" />
+<FileExtension value="csv" />
+<ElementType name="Worksheet" elementClass="Section" analysisTree="&lt;Worksheet name='$i'&gt;&lt;/Worksheet&gt;" />
+<ElementType name="Requirement" elementClass="Requirement" analysisTree="&lt;Row&gt;&lt;Cell col='^1$'&gt;$i^([\w\-]*\d)$&lt;/Cell&gt;&lt;Cell col='^2$'&gt;$l$o&lt;/Cell&gt;&lt;Cell col='^3$'&gt;$t$o&lt;/Cell&gt;&lt;/Row&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" analysisTree="&lt;Cell&gt;$i\[Covers[ \t]*:[ \t]*([^\]]*)\]&lt;/Cell&gt;" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" analysisTree="&lt;Row&gt;&lt;Cell col='^1$'&gt;^[\w\-]*\d$&lt;/Cell&gt;&lt;Cell col='^4$'&gt;$i&lt;/Cell&gt;&lt;/Row&gt;" />
+</DocumentType>
+</Types>

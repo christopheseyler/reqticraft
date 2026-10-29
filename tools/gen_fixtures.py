@@ -102,6 +102,12 @@ EXPECTED = {
     "uncovered": ["THS_REQ5", "DES_REQ7"],
     "derived": ["DES_REQ6", "DES_REQ7"],
     "undefined_references": [{"from": "DES_REQ5", "target": "THS_REQ99"}],
+    # Projets partiels (code, json, composite) : couverture attendue par document couvert.
+    "partial": {
+        "code/thermostat.rqtf": {"Conception": [5, 7]},
+        "json/thermostat.rqtf": {"Spécification": [5, 6]},
+        "composite/thermostat.rqtf": {"Spécification": [5, 6]},
+    },
 }
 
 
@@ -330,31 +336,124 @@ def write_pdf(path, title, blocks):
 
 # --- Projets ----------------------------------------------------------------
 
-def write_projects(directory, doc_type, extension):
-    names = {"specification": "Spécification", "design": "Conception", "tests": "Tests"}
+NAMES = {"specification": "Spécification", "design": "Conception", "tests": "Tests"}
+
+
+def write_project(path, docs, covers, extra=()):
+    """Projet au format XML. docs : [(nom, type, chemin)] ; covers : [(couvert, couvrant)]."""
     xml = ['<?xml version="1.0" encoding="UTF-8"?>', "<Project>"]
-    for x, key in enumerate(names):
-        xml.append(f'<Document name="{names[key]}" positionX="{800 + 700 * x}" '
-                   f'positionY="{400 + 600 * x}" type="{doc_type}" path="{key}.{extension}">')
+    for x, (name, doc_type, doc_path) in enumerate(docs):
+        xml.append(f'<Document name="{name}" positionX="{800 + 700 * x}" '
+                   f'positionY="{400 + 600 * x}" type="{doc_type}" path="{doc_path}">')
         xml.append("</Document>")
-    for covered, covering in (("specification", "design"), ("design", "tests")):
-        xml.append(f'<Cover outputDocument="{names[covered]}" positionX="0" positionY="0">')
-        xml.append(f'<InputDocument name="{names[covering]}" />')
+    xml.extend(extra)
+    for covered, covering in covers:
+        xml.append(f'<Cover outputDocument="{covered}" positionX="0" positionY="0">')
+        xml.append(f'<InputDocument name="{covering}" />')
         xml.append("</Cover>")
     xml.append("</Project>")
-    write_text(directory / "thermostat.rqtf", xml)
+    write_text(path, xml)
 
-    ini = ["[Files]", "Names=" + ",".join(names.values()), ""]
-    covers = {"specification": "design", "design": "tests"}
-    for x, key in enumerate(names):
-        ini.append(f"[{names[key]}]")
-        if key in covers:
-            ini.append(f"Cover1={names[covers[key]]}")
+
+def write_projects(directory, doc_type, extension):
+    docs = [(NAMES[k], doc_type, f"{k}.{extension}") for k in NAMES]
+    covers = [(NAMES["specification"], NAMES["design"]), (NAMES["design"], NAMES["tests"])]
+    write_project(directory / "thermostat.rqtf", docs, covers)
+
+    ini = ["[Files]", "Names=" + ",".join(NAMES.values()), ""]
+    covered_by = {"specification": "design", "design": "tests"}
+    for x, key in enumerate(NAMES):
+        ini.append(f"[{NAMES[key]}]")
+        if key in covered_by:
+            ini.append(f"Cover1={NAMES[covered_by[key]]}")
         ini.append(f"GraphicPosition={800 + 700 * x}@{400 + 600 * x}")
         ini.append(f"Type={doc_type}")
         ini.append(f"Path={key}.{extension}")
         ini.append("")
     write_text(directory / "thermostat-ini.rqtf", ini)
+
+
+# --- Code, JSON, projet composite --------------------------------------------
+
+CODE = {
+    "src/acquisition.c": [
+        "/* Acquisition de la température. */",
+        "#include \"sensor.h\"",
+        "",
+        "// Implements DES_REQ1",
+        "void sample_on_interrupt(void) { /* ... */ }",
+        "",
+        "/* Covers: DES_REQ2 */",
+        "static const float calibration[16] = { 0 };",
+    ],
+    "src/sensor.h": ["#pragma once", "void sample_on_interrupt(void);"],
+    "src/regulator.c": [
+        "// Implements DES_REQ3, DES_REQ4",
+        "int clamp_setpoint(int value) { return value; }",
+    ],
+    "src/api/rest.py": [
+        "# Covers: DES_REQ5",
+        "def put_setpoint(value):",
+        "    return value",
+    ],
+    "src/notes.txt": ["Ce fichier n'est pas du code : // Implements DES_REQ7 doit être ignoré."],
+}
+
+JSON_SPEC = {
+    "title": "Spécification du thermostat",
+    "requirements": [
+        {"id": rid, "label": label, "text": body, "priority": attrs.get("Priority")}
+        for _, reqs in SPEC
+        for rid, label, body, attrs, _ in reqs
+    ],
+}
+
+
+def write_extras():
+    # Tableur analysé en XML : mêmes documents, type ExcelXML.
+    docs = [(NAMES[k], "ExcelXML", f"{k}.xlsx") for k in NAMES]
+    covers = [(NAMES["specification"], NAMES["design"]), (NAMES["design"], NAMES["tests"])]
+    write_project(ROOT / "xlsx" / "thermostat-xml.rqtf", docs, covers)
+
+    code = ROOT / "code"
+    for rel, lines in CODE.items():
+        target = code / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        write_text(target, lines)
+    write_project(code / "thermostat.rqtf",
+                  [(NAMES["design"], "Text", "../text/design.txt"), ("Code", "Code", "src")],
+                  [(NAMES["design"], "Code")])
+
+    json_dir = ROOT / "json"
+    json_dir.mkdir(parents=True, exist_ok=True)
+    (json_dir / "specification.json").write_text(
+        json.dumps(JSON_SPEC, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    write_project(json_dir / "thermostat.rqtf",
+                  [(NAMES["specification"], "JSON", "specification.json"),
+                   (NAMES["design"], "Text", "../text/design.txt")],
+                  [(NAMES["specification"], NAMES["design"])])
+
+    # Projet composite : la spécification du projet remplace celle du sous-projet
+    # « Fournisseur », dont la conception la couvre.
+    composite = ROOT / "composite"
+    supplier = composite / "fournisseur"
+    supplier.mkdir(parents=True, exist_ok=True)
+    write_project(supplier / "fournisseur.rqtf",
+                  [(NAMES["specification"], "Text", "../../text/specification.txt"),
+                   (NAMES["design"], "Text", "../../text/design.txt")],
+                  [(NAMES["specification"], NAMES["design"])])
+    spec = NAMES["specification"]
+    write_project(composite / "thermostat.rqtf",
+                  [(spec, "Text", "../text/specification.txt")],
+                  [],
+                  extra=[
+                      '<ProjectReference name="Fournisseur" positionX="800" positionY="1200" '
+                      'type="_ProjectReference" path="fournisseur\\fournisseur.rqtfimage">',
+                      "</ProjectReference>",
+                      f'<ReplacingPath><Component name="{spec}" />',
+                      f'<ReplacedPath><Component name="Fournisseur" /><Component name="{spec}" /></ReplacedPath>',
+                      "</ReplacingPath>",
+                  ])
 
 
 # --- Utilitaires ------------------------------------------------------------
@@ -393,6 +492,7 @@ def main():
             else:
                 write_pdf(target, title, blocks)
         write_projects(directory, doc_type, extension)
+    write_extras()
     (ROOT / "expected.json").write_text(
         json.dumps(EXPECTED, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 

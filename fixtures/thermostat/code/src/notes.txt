@@ -1,0 +1,1 @@
+Ce fichier n'est pas du code : // Implements DES_REQ7 doit être ignoré.

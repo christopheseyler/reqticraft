@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+<Document name="Spécification" positionX="800" positionY="400" type="Text" path="../text/specification.txt">
+</Document>
+<ProjectReference name="Fournisseur" positionX="800" positionY="1200" type="_ProjectReference" path="fournisseur\fournisseur.rqtfimage">
+</ProjectReference>
+<ReplacingPath><Component name="Spécification" />
+<ReplacedPath><Component name="Fournisseur" /><Component name="Spécification" /></ReplacedPath>
+</ReplacingPath>
+</Project>

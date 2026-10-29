@@ -13,6 +13,8 @@ pub struct Project {
     pub properties: Vec<(String, String)>,
     pub nodes: Vec<ProjectNode>,
     pub channels: Vec<Channel>,
+    /// Remplacement d'un document de sous-projet par un document du projet.
+    pub path_replacements: Vec<PathReplacement>,
 }
 
 impl Project {
@@ -31,6 +33,8 @@ pub enum ProjectNode {
         default_type: Option<String>,
         children: Vec<NodeId>,
     },
+    /// Sous-projet (projet composite), désigné par son fichier de résultats
+    /// ou de configuration.
     SubProject {
         name: String,
         path: PathBuf,
@@ -58,12 +62,25 @@ pub struct DocumentDecl {
     /// Valeurs des variables déclarées par le type (images, texte riche…).
     pub params: Vec<(String, String)>,
     pub modification_docs: Vec<ModificationDocRef>,
+    /// Types d'éléments à ignorer pour ce document.
+    pub ignored_types: Vec<String>,
+    /// Position dans le diagramme de l'éditeur de projet.
+    pub position: Option<(i64, i64)>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ModificationDocRef {
     pub path: PathBuf,
     pub doc_type: String,
+}
+
+/// Chemin d'un document : sous-projets traversés puis nom du document.
+pub type ComponentPath = Vec<String>;
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PathReplacement {
+    pub replacing: ComponentPath,
+    pub replaced: Vec<ComponentPath>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

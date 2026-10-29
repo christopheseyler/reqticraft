@@ -28,7 +28,7 @@
 | Regex | **`pcre2`** (crate de liaison PCRE2), avec `fancy-regex` en repli pur Rust | Dialecte identique à celui des types existants (lookbehind, `(?:)`, paresseux, `\d` Unicode) | `regex` seul : pas de lookaround ni de backreferences |
 | XML | `quick-xml` (lecture en flux) et `roxmltree` (arbres d'analyse) | Rapide, sans dépendance native | — |
 | Formats Office | `zip` + `quick-xml` pour **docx**, `calamine` pour **xlsx/xls/ods**, `csv` | Conversion **sans Word ni Excel**, multiplateforme | Automatisation COM : Windows seul, fragile |
-| PDF | **`pdfium-render`** (PDFium, licence BSD/Apache, binaire embarqué) : glyphes avec position, police, taille, couleur et graisse, signets, annotations, images, mot de passe. Reconstitution des paragraphes et tableaux dans notre propre code. | PDFium est le moteur de Chrome : très robuste sur les PDF réels | `lopdf` / `pdf-extract` : extraction de texte trop pauvre (pas de mise en forme fiable) ; MuPDF : licence AGPL |
+| PDF | **`pdf-extract` + `lopdf`** (Rust pur) : glyphes avec position et taille, signets, mot de passe. Reconstitution des paragraphes dans notre propre code. Passage à **`pdfium-render`** si la robustesse sur des PDF réels l'exige (police, graisse, couleur, tableaux). | Aucun binaire à télécharger ni à embarquer ; suffisant pour le texte positionné | MuPDF : licence AGPL |
 | Stockage | Projet natif en **TOML/JSON** ; cache d'analyse et instantanés en **SQLite** (`rusqlite`) | Configuration lisible et diffable ; résultats interrogeables, comparaisons d'instantanés en SQL | Binaire maison : opaque |
 | Application de bureau | **Tauri 2** | Léger (WebView système), cœur Rust en processus, multiplateforme, mise à jour signée | Electron : lourd ; Qt : interface moins moderne et licence |
 | Interface | **TypeScript + React** (ou SolidJS), **Vite**, **TanStack Table/Virtual**, **React Flow + elkjs** (diagrammes et vue graphique), **Monaco** (éditeur et testeur de regex), **Tailwind** + Radix (composants accessibles) | Grilles virtualisées pour 100 000 lignes ; diagrammes avec mise en page automatique ; accessibilité | — |
@@ -51,6 +51,7 @@ reqticraft/
 │  ├─ rc-snapshot     # instantanés SQLite, comparaison, historique d'élément
 │  ├─ rc-report       # requêtes de rapport, gabarits, rendus
 │  ├─ rc-plugin       # hôte de plugins (JSON-RPC, WASM)
+│  ├─ rc-core         # façade : chargement, conversion, capture, analyse ; bibliothèque de types intégrée
 │  └─ rc-cli          # binaire `reqticraft`
 ├─ app/               # Tauri : src-tauri (commandes → cœur) + ui (React/TS)
 ├─ plugins/           # connecteurs hors cœur (jira, polarion, reqif…)
@@ -344,3 +345,18 @@ Après le MVP :
 | Pas d'import de l'historique `.rqtfimage` | Moyen (attente client) | Le documenter ; reconstituer l'historique depuis Git |
 | Connecteurs propriétaires (DOORS, CATIA, ENOVIA) | Élevé pour certains clients | Plugins tiers ; priorité aux formats d'échange (ReqIF, XML d'export) |
 | Propriété intellectuelle et marques | Élevé | Clean room documentée, aucun fichier Dassault dans le dépôt, nom et interface originaux |
+
+## 10. Avancement (2026-10-28)
+
+| Étape | État |
+|---|---|
+| M0 Fondations | Fait |
+| M1 Lecture des projets | Fait : `.rqtf`, `.types`, `.filters`, `.marks`, documents de modification, dans les deux formats ; 50/50 projets d'exemple lus |
+| M2 Moteur et analyse | Fait : capture par expressions (sections, profondeur, macro-exigences, exigences, entités, références, attributs, textes, exclusions, suppressions) ; couverture par canal, ET, OU ; dérivées ; règles principales ; CLI `analyze` |
+| M3 Convertisseurs P0 | Fait : texte, docx, xlsx/xls/ods/csv (texte et XML), PDF, code (répertoires), JSON, XML ; arbres d'analyse XML ; projets composites |
+| M4 à M6 | À faire (interface, édition, instantanés, rapports) |
+
+Écarts par rapport au plan : le PDF utilise `pdf-extract` plutôt que PDFium (voir §2) ; un crate
+`rc-core` regroupe l'orchestration commune à la CLI et à l'application. Limites connues du P0 : pas de
+`.doc` binaire, pas d'analyse syntaxique du code (fonctions), pas d'images ni de tableaux restitués,
+filtres lus mais pas encore appliqués.

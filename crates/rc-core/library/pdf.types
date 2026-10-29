@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Type ReqtiCraft pour PDF. L'intermédiaire a un paragraphe reconstitué par ligne,
+     éventuellement préfixé par « Heading n<TAB> » (option withStyles). -->
+<Types coupling="PDF">
+<DocumentType name="PDF" convertTool="PaDaFix" editTool="pdf" description="PDF : titres numérotés « 1. Titre », exigences XXX_REQn, références [Covers: …]">
+<FileExtension value="pdf" />
+<Variable name="withStyles" label="Titres d'après les signets" type="boolean" />
+<Variable name="pagesToExclude" label="Pages exclues (1,2,4-8)" type="string" />
+<Variable name="password" label="Mot de passe" type="string" />
+<ElementType name="Heading 1" elementClass="Section" regularExpression="^(?:[Hh]eading \d\t)?(\d+)\.[ \t]+(.+)$" />
+<ElementType name="Heading 2" elementClass="Section" regularExpression="^(?:[Hh]eading \d\t)?(\d+\.\d+)\.?[ \t]+(.+)$">
+<ParentType name="Heading 1" />
+</ElementType>
+<ElementType name="Heading 3" elementClass="Section" regularExpression="^(?:[Hh]eading \d\t)?(\d+\.\d+\.\d+)\.?[ \t]+(.+)$">
+<ParentType name="Heading 2" />
+</ElementType>
+<ElementType name="Requirement" elementClass="Requirement" regularExpression="^(?:[^\t\n]+\t)?([\w\-]*REQ[\w\-]*\d)(?:[ \t]*:[ \t]*(.*\S))?[ \t]*$" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" regularExpression="\[Covers[ \t]*:[ \t]*([^\]]*)\]" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" printExpression="Priority : $i" regularExpression="^(?:[^\t\n]+\t)?[ \t]*-?[ \t]*Priority[ \t]*:[ \t]*(\S+)">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+<TerminalType name="Text" elementClass="Text" regularExpression="^(?!(?:[^\t\n]+\t)?(?:[ \t]*-?[ \t]*Priority[ \t]*:|\[Covers|[\w\-]*REQ[\w\-]*\d(?:[ \t]*:|[ \t]*$)|\d+(?:\.\d+)*\.?[ \t]))(?:[^\t\n]+\t)?(.+)$" />
+</DocumentType>
+</Types>

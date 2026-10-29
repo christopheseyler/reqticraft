@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Type ReqtiCraft. Conventions : « 1. Titre », « REQ12 : libellé », texte entre << et >>,
+     « [Covers: REQ1, REQ2] », « - Priority : High ». -->
+<Types coupling="Text">
+<DocumentType name="Text" convertTool="text" editTool="TextEditor" description="Fichier texte : titres numérotés, exigences XXX_REQn, références [Covers: …]">
+<FileExtension value="txt" />
+<FileExtension value="md" />
+<ElementType name="Heading 1" elementClass="Section" regularExpression="^(\d+)\.[ \t]+(.+)$" />
+<ElementType name="Heading 2" elementClass="Section" regularExpression="^(\d+\.\d+)\.?[ \t]+(.+)$">
+<ParentType name="Heading 1" />
+</ElementType>
+<ElementType name="Heading 3" elementClass="Section" regularExpression="^(\d+\.\d+\.\d+)\.?[ \t]+(.+)$">
+<ParentType name="Heading 2" />
+</ElementType>
+<ElementType name="Macro-requirement" elementClass="MacroRequirement" isNested="true" regularExpression="\[MacroReq_([^\]]+)\]?" endExpression="\[End_of_MacroReq\]" />
+<ElementType name="Requirement" elementClass="Requirement" regularExpression="^[ \t]*([\w\-]*REQ[\w\-]*\d)(?:[ \t]*:[ \t]*(.*\S))?[ \t]*$" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" regularExpression="\[Covers[ \t]*:[ \t]*([^\]]*)\]" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" printExpression="Priority : $i" regularExpression="^[ \t]*-?[ \t]*Priority[ \t]*:[ \t]*(\S+)">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+<TerminalType name="Text" elementClass="Text" regularExpression="&lt;&lt;([\s\S]*?)&gt;&gt;" />
+</DocumentType>
+</Types>
