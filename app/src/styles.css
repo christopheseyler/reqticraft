@@ -885,3 +885,72 @@ select {
   justify-content: space-between;
   gap: 8px;
 }
+
+/* ---------------------------------------------------------------- instantanés et rapports (M6) */
+
+.narrow-form {
+  max-width: 560px;
+  margin: 16px 0;
+}
+
+.diff section {
+  margin-top: 8px;
+}
+
+.modified {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.text-diff {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+
+.text-diff del {
+  color: var(--bad);
+}
+
+.text-diff ins {
+  color: var(--ok);
+  text-decoration: none;
+}
+
+.choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.choice legend {
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 0 4px;
+}
+
+.choice label.inline {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.history li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0;
+}
+
+.history-when {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.changed-text {
+  color: var(--info);
+}

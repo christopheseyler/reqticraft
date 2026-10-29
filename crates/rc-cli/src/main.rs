@@ -6,8 +6,9 @@
 mod output;
 mod serve;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
+use rc_core::outputs::{self, rc_report::Format, rc_report::Template, rc_snapshot};
 use rc_core::rc_model::{DocumentType, Severity};
 use std::io::{IsTerminal, Write};
 use std::path::{Path, PathBuf};
@@ -41,11 +42,32 @@ enum Command {
         /// Code de sortie 2 si un message atteint ce niveau.
         #[arg(long, value_enum)]
         fail_on: Option<FailOn>,
+        /// Écrit aussi un rapport (format d'après l'extension : html, xlsx, docx, csv, md).
+        #[arg(long, value_name = "FICHIER")]
+        report: Option<PathBuf>,
+        /// Modèle du rapport écrit par `--report`.
+        #[arg(long, value_enum, default_value = "matrix")]
+        template: ReportTemplate,
     },
     /// Génère un rapport.
-    Report { project: PathBuf },
-    /// Crée, liste ou compare des instantanés.
-    Snapshot { project: PathBuf },
+    Report {
+        project: PathBuf,
+        /// Modèle de rapport.
+        #[arg(long, value_enum, default_value = "matrix")]
+        template: ReportTemplate,
+        /// Format (par défaut : d'après l'extension du fichier de sortie).
+        #[arg(long, value_enum)]
+        format: Option<ReportFormat>,
+        /// Fichier de sortie.
+        #[arg(short, long, value_name = "FICHIER")]
+        output: PathBuf,
+    },
+    /// Crée, liste ou compare des instantanés (base `<projet>.rcsnap`).
+    Snapshot {
+        project: PathBuf,
+        #[command(subcommand)]
+        action: SnapshotAction,
+    },
     /// Types d'analyse : liste, ou test d'un type sur un fichier.
     Types {
         #[command(subcommand)]
@@ -72,6 +94,70 @@ enum Command {
         #[arg(long, value_name = "RÉPERTOIRE")]
         ui: Option<PathBuf>,
     },
+}
+
+#[derive(Subcommand)]
+enum SnapshotAction {
+    /// Enregistre l'état courant sous un nom.
+    Create { name: String },
+    /// Liste les instantanés.
+    List,
+    /// Compare un instantané à l'état courant, ou à un second instantané.
+    Diff { from: String, to: Option<String> },
+    /// État d'un élément dans chaque instantané.
+    History {
+        /// Identifiant de l'élément.
+        ident: String,
+        /// Document de l'élément (par défaut : le premier qui le contient).
+        #[arg(long)]
+        document: Option<String>,
+    },
+    /// Supprime un instantané.
+    Delete { name: String },
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum ReportTemplate {
+    /// Matrice de traçabilité.
+    Matrix,
+    /// Résultats d'analyse.
+    Analysis,
+    /// Description du projet.
+    Description,
+    /// Contrôle des règles.
+    Rules,
+}
+
+impl ReportTemplate {
+    fn core(self) -> Template {
+        match self {
+            ReportTemplate::Matrix => Template::Matrix,
+            ReportTemplate::Analysis => Template::Analysis,
+            ReportTemplate::Description => Template::Description,
+            ReportTemplate::Rules => Template::Rules,
+        }
+    }
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum ReportFormat {
+    Html,
+    Xlsx,
+    Docx,
+    Csv,
+    Md,
+}
+
+impl ReportFormat {
+    fn core(self) -> Format {
+        match self {
+            ReportFormat::Html => Format::Html,
+            ReportFormat::Xlsx => Format::Xlsx,
+            ReportFormat::Docx => Format::Docx,
+            ReportFormat::Csv => Format::Csv,
+            ReportFormat::Md => Format::Markdown,
+        }
+    }
 }
 
 #[derive(Subcommand)]
@@ -125,6 +211,8 @@ fn main() -> ExitCode {
                     json: None,
                     details: true,
                     fail_on: None,
+                    report: None,
+                    template: ReportTemplate::Matrix,
                 },
             };
             execute(cli)
@@ -170,6 +258,8 @@ fn run(cli: Cli) -> Result<ExitCode> {
             json,
             details,
             fail_on,
+            report,
+            template,
         } => {
             let run = rc_core::analyze_project(&project, &cli.config)
                 .with_context(|| format!("analyse de {}", project.display()))?;
@@ -178,6 +268,11 @@ fn run(cli: Cli) -> Result<ExitCode> {
                 let report = output::json_report(&run);
                 std::fs::write(&path, serde_json::to_string_pretty(&report)?)
                     .with_context(|| format!("écriture de {}", path.display()))?;
+            }
+            if let Some(path) = report {
+                outputs::write_report(&run, template.core(), None, &path)
+                    .map_err(anyhow::Error::msg)?;
+                println!("Rapport : {}", path.display());
             }
             let failed = match fail_on {
                 Some(FailOn::Error) => run.analysis.count(Severity::Error) > 0,
@@ -237,9 +332,114 @@ fn run(cli: Cli) -> Result<ExitCode> {
             print!("{}", output::element_tree(&doc));
             Ok(ExitCode::SUCCESS)
         }
-        Command::Report { .. } => bail!("la commande `report` n'est pas encore implémentée"),
-        Command::Snapshot { .. } => bail!("la commande `snapshot` n'est pas encore implémentée"),
+        Command::Report {
+            project,
+            template,
+            format,
+            output: out,
+        } => {
+            let run = rc_core::analyze_project(&project, &cli.config)
+                .with_context(|| format!("analyse de {}", project.display()))?;
+            outputs::write_report(&run, template.core(), format.map(ReportFormat::core), &out)
+                .map_err(anyhow::Error::msg)?;
+            println!("Rapport : {}", out.display());
+            Ok(ExitCode::SUCCESS)
+        }
+        Command::Snapshot { project, action } => {
+            let run = rc_core::analyze_project(&project, &cli.config)
+                .with_context(|| format!("analyse de {}", project.display()))?;
+            let mut store = outputs::snapshots(&run).map_err(anyhow::Error::msg)?;
+            snapshot(&run, &mut store, action)?;
+            Ok(ExitCode::SUCCESS)
+        }
     }
+}
+
+fn snapshot(
+    run: &rc_core::ProjectRun,
+    store: &mut rc_snapshot::Store,
+    action: SnapshotAction,
+) -> Result<()> {
+    let find = |store: &rc_snapshot::Store, name: &str| -> Result<rc_snapshot::SnapshotInfo> {
+        store
+            .find(name)?
+            .with_context(|| format!("instantané « {name} » introuvable"))
+    };
+    match action {
+        SnapshotAction::Create { name } => {
+            let info = store.create(&name, &outputs::current_state(run))?;
+            println!(
+                "Instantané « {} » créé : {} exigences, couverture {}/{}",
+                info.name, info.requirements, info.covered, info.coverable
+            );
+        }
+        SnapshotAction::List => {
+            let list = store.list()?;
+            if list.is_empty() {
+                println!("Aucun instantané.");
+            }
+            for s in list {
+                println!(
+                    "{:>3}  {:<24} {}  exigences {:>5}  couverture {:>5}/{:<5}  erreurs {}",
+                    s.id, s.name, s.created, s.requirements, s.covered, s.coverable, s.errors
+                );
+            }
+        }
+        SnapshotAction::Diff { from, to } => {
+            let a = find(store, &from)?;
+            let old = store.load(a.id)?;
+            let (label, new) = match to {
+                Some(t) => {
+                    let b = find(store, &t)?;
+                    (b.name.clone(), store.load(b.id)?)
+                }
+                None => ("état courant".to_owned(), outputs::current_state(run)),
+            };
+            print!(
+                "{}",
+                output::snapshot_diff(&a.name, &label, &rc_snapshot::diff(&old, &new))
+            );
+        }
+        SnapshotAction::History { ident, document } => {
+            let state = outputs::current_state(run);
+            let element = state
+                .elements
+                .iter()
+                .find(|e| {
+                    e.ident
+                        .as_deref()
+                        .is_some_and(|i| i.eq_ignore_ascii_case(&ident))
+                        && document.as_ref().is_none_or(|d| *d == e.document)
+                })
+                .with_context(|| format!("élément « {ident} » introuvable dans l'état courant"))?;
+            let (doc, _, key) = element.key().context("élément sans identifiant")?;
+            for (s, e) in store.history(&doc, &key)? {
+                match e {
+                    Some(e) => println!(
+                        "{:<24} {}  {:<10} {}",
+                        s.name,
+                        s.created,
+                        e.status,
+                        e.text.replace('\n', " ")
+                    ),
+                    None => println!("{:<24} {}  absent", s.name, s.created),
+                }
+            }
+            println!(
+                "{:<24} {:<20}  {:<10} {}",
+                "(courant)",
+                "",
+                element.status,
+                element.text.replace('\n', " ")
+            );
+        }
+        SnapshotAction::Delete { name } => {
+            let s = find(store, &name)?;
+            store.delete(s.id)?;
+            println!("Instantané « {} » supprimé.", s.name);
+        }
+    }
+    Ok(())
 }
 
 /// Document isolé (commandes `convert` et `types test`) : chemin, URL ou

@@ -323,3 +323,50 @@ pub fn json_report(run: &ProjectRun) -> JsonReport<'_> {
         messages: &a.messages,
     }
 }
+
+/// Comparaison de deux états (instantané → instantané ou état courant).
+pub fn snapshot_diff(from: &str, to: &str, d: &rc_core::outputs::rc_snapshot::Diff) -> String {
+    let mut out = String::new();
+    let _ = writeln!(out, "Comparaison : {from} → {to}");
+    let _ = writeln!(
+        out,
+        "Couverture : {} → {}",
+        percent(d.before.0, d.before.1),
+        percent(d.after.0, d.after.1)
+    );
+    let list = |out: &mut String, title: &str, items: Vec<String>| {
+        if items.is_empty() {
+            return;
+        }
+        let _ = writeln!(out, "\n{title} ({})", items.len());
+        for i in items {
+            let _ = writeln!(out, "  {i}");
+        }
+    };
+    let name =
+        |e: &rc_core::outputs::rc_snapshot::ElementState| format!("{} › {}", e.document, e.name());
+    list(&mut out, "Ajoutées", d.added.iter().map(name).collect());
+    list(&mut out, "Supprimées", d.removed.iter().map(name).collect());
+    list(
+        &mut out,
+        "Modifiées",
+        d.modified
+            .iter()
+            .map(|m| format!("{}  [{}]", name(&m.after), m.fields.join(", ")))
+            .collect(),
+    );
+    list(
+        &mut out,
+        "Couvertures perdues",
+        d.coverage_lost.iter().map(name).collect(),
+    );
+    list(
+        &mut out,
+        "Couvertures gagnées",
+        d.coverage_gained.iter().map(name).collect(),
+    );
+    if d.is_empty() {
+        let _ = writeln!(out, "\nAucune différence.");
+    }
+    out
+}

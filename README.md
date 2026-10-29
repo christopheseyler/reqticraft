@@ -7,8 +7,9 @@ ReqtiCraft capture les exigences et leurs références directement dans les docu
 la couverture et l'analyse d'impact, contrôle des règles de cohérence et produit des rapports. Il sait
 importer les projets Reqtify existants.
 
-> État : **application de bureau** avec édition de projet, de types et de filtres (M4 et M5), et
-> connecteurs **P0, P1 et P2**. Les instantanés et les rapports arrivent avec M6.
+> État : **MVP** atteint (M0 à M6) : application de bureau (analyse, édition de projet, de types et de
+> filtres, instantanés, rapports), ligne de commande pour l'intégration continue, et connecteurs
+> **P0, P1 et P2**.
 >
 > - Documents : texte, Word docx, tableurs, PDF, code source, JSON, XML, HTML, Markdown, AsciiDoc,
 >   RTF, OpenDocument, PowerPoint, FrameMaker MIF, ReqIF, Visio, MS Project, UML/SysML (XMI),
@@ -67,6 +68,27 @@ Le transport HTTP utilise `curl` ; Git, Subversion, CVS, Perforce, `sqlplus`, `s
 `mediainfo` sont utilisés s'ils sont installés. Les connecteurs propriétaires se branchent par le
 [protocole de plugins](docs/plugin-protocol.md).
 
+### Intégration continue, instantanés et rapports
+
+```bash
+cargo run -p rc-cli -- analyze projet.rqtf --fail-on error --report matrice.xlsx
+```
+
+```bash
+cargo run -p rc-cli -- snapshot projet.rqtf create V1
+```
+
+```bash
+cargo run -p rc-cli -- snapshot projet.rqtf diff V1
+```
+
+```bash
+cargo run -p rc-cli -- report projet.rqtf --template analysis -o resultats.docx
+```
+
+Le code de sortie vaut 2 quand un message atteint le niveau de `--fail-on`. Les instantanés sont
+stockés dans `projet.rcsnap`, à côté du projet.
+
 ## Application de bureau
 
 L'application ouvre un projet `.rqtf` et affiche :
@@ -90,6 +112,11 @@ Elle permet aussi de modifier le projet :
   sous-expression, rôle des groupes, parents) et **testeur** sur un fichier, avec l'intermédiaire ;
 - **Filtres** : conditions combinées en ET ou en OU, paramètres `$nom`, application à l'affichage
   (masquage) ou à l'analyse (taux recalculés).
+
+Enfin, les **instantanés** enregistrent l'état de l'analyse pour le comparer plus tard (exigences
+ajoutées, modifiées, supprimées, couvertures perdues) et suivre l'historique d'un élément ; les
+**rapports** (matrice de traçabilité, résultats d'analyse, description du projet, contrôle des règles)
+sortent en HTML, Excel, Word, CSV ou Markdown.
 
 Un projet s'enregistre en `.rqtf` (avec `<projet>.types` et `<projet>.filters`, lisibles par Reqtify)
 ou au format natif `.rcproj` (un seul fichier JSON).

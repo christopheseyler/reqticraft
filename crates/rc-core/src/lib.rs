@@ -14,6 +14,7 @@ use rc_model::{
 };
 use std::path::{Path, PathBuf};
 
+pub mod outputs;
 pub mod session;
 pub mod session_edit;
 

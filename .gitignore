@@ -23,3 +23,6 @@ Thumbs.db
 
 # Copies de travail des connecteurs (types d'accès)
 .reqticraft/
+
+# Instantanés produits en essayant les exemples
+*.rcsnap

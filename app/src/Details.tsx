@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { call, errorText } from "./api";
 import type { Details as DetailsData, Selection } from "./types";
+import { date, type ElementState, type SnapshotInfo } from "./History";
 import { ChangeBadge, ElementLink, SeverityBadge, StatusBadge } from "./ui";
+
+interface HistoryEntry {
+  snapshot: SnapshotInfo | null;
+  state: ElementState | null;
+}
+
+const STATUS: Record<string, string> = { covered: "couverte", uncovered: "non couverte", derived: "dérivée", none: "" };
 
 // Panneau Détails : texte, attributs, couverture et problèmes d'un élément.
 export function Details({
@@ -17,6 +25,18 @@ export function Details({
 }) {
   const [data, setData] = useState<DetailsData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+
+  useEffect(() => {
+    if (!selection) return;
+    let live = true;
+    call<HistoryEntry[]>("history", { ...selection })
+      .then((h) => live && setHistory(h))
+      .catch(() => live && setHistory([]));
+    return () => {
+      live = false;
+    };
+  }, [selection, version]);
 
   useEffect(() => {
     if (!selection) {
@@ -113,6 +133,33 @@ export function Details({
             {data.problems.map((p, i) => (
               <li key={i}>
                 <SeverityBadge severity={p.severity} /> {p.text}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {history.length > 1 && (
+        <section>
+          <h3>Historique</h3>
+          <ul className="plain history">
+            {history.map((h, i) => (
+              <li key={i}>
+                <span className="history-when">
+                  {h.snapshot ? `${h.snapshot.name} (${date(h.snapshot.created)})` : "Maintenant"}
+                </span>
+                {h.state ? (
+                  <span>
+                    {STATUS[h.state.status] && <span className={`badge status-${h.state.status}`}>{STATUS[h.state.status]}</span>}{" "}
+                    {i > 0 && history[i - 1].state && history[i - 1].state!.text !== h.state.text ? (
+                      <span className="changed-text">{h.state.text}</span>
+                    ) : (
+                      <span className="muted">{i === 0 ? h.state.text : "texte inchangé"}</span>
+                    )}
+                  </span>
+                ) : (
+                  <span className="muted">absent</span>
+                )}
               </li>
             ))}
           </ul>

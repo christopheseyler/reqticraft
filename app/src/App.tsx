@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { call, desktop, errorText, pickSavePath } from "./api";
 import { FilterEditor } from "./FilterEditor";
+import { Reports, Snapshots } from "./History";
 import { ProjectEditor } from "./ProjectEditor";
 import { TypeEditor } from "./TypeEditor";
 import type { Overview, Selection, Severity } from "./types";
@@ -13,6 +14,8 @@ const VIEWS = [
   { id: "coverage", label: "Couverture" },
   { id: "impact", label: "Impact" },
   { id: "problems", label: "Problèmes" },
+  { id: "snapshots", label: "Instantanés" },
+  { id: "reports", label: "Rapports" },
   { id: "project", label: "Projet" },
   { id: "types", label: "Types" },
   { id: "filters", label: "Filtres" },
@@ -248,6 +251,10 @@ export function App() {
           <TypeEditor onSaved={applied} />
         ) : view === "filters" ? (
           <FilterEditor onChanged={applied} />
+        ) : view === "snapshots" ? (
+          <Snapshots version={version} />
+        ) : view === "reports" ? (
+          <Reports overview={overview} />
         ) : (
           <Problems severity={severity} setSeverity={setSeverity} onSelect={select} version={version} />
         )}

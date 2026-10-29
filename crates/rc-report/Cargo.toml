@@ -7,7 +7,11 @@ rust-version.workspace = true
 publish.workspace = true
 
 [dependencies]
+rc-analysis.workspace = true
 rc-model.workspace = true
+rust_xlsxwriter = "0.96.0"
+thiserror.workspace = true
+zip = { version = "7.3.0", default-features = false, features = ["deflate"] }
 
 [lints]
 workspace = true

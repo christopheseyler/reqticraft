@@ -221,3 +221,54 @@ fn display_and_analysis_filters() {
     assert_eq!(again.filters_info().filters.filters.len(), 1);
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn p4_snapshot_compare_and_report() {
+    let dir = workspace("p4");
+    let src = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../fixtures/thermostat/text/thermostat.rqtf");
+    std::fs::copy(src, dir.join("thermostat.rqtf")).unwrap();
+    let mut s = Session::open(&dir.join("thermostat.rqtf"), &[]).unwrap();
+    let v1 = s.create_snapshot("V1").unwrap();
+    assert!(s.create_snapshot("V1").is_err());
+
+    let spec = dir.join("specification.txt");
+    let text = std::fs::read_to_string(&spec)
+        .unwrap()
+        .replace("toutes les 10 secondes", "toutes les 5 secondes");
+    std::fs::write(&spec, text).unwrap();
+    s.reload().unwrap();
+
+    let d = s.compare(v1.id, None).unwrap();
+    assert_eq!(d.modified.len(), 1);
+    assert_eq!(d.modified[0].after.ident.as_deref(), Some("THS_REQ1"));
+    assert!(d.added.is_empty() && d.removed.is_empty());
+
+    let req1 = s.run.analysis.documents[0]
+        .elements
+        .iter()
+        .position(|e| e.ident.as_deref() == Some("THS_REQ1"))
+        .unwrap();
+    let h = s.history(0, req1).unwrap();
+    assert_eq!(h.len(), 2);
+    assert!(h[0].state.as_ref().unwrap().text.contains("10 secondes"));
+    assert!(h[1].snapshot.is_none() && h[1].state.as_ref().unwrap().text.contains("5 secondes"));
+
+    // Matrice exportée en XLSX, relative au répertoire du projet.
+    let out = s
+        .report("matrix", "xlsx", Path::new("matrice.xlsx"))
+        .unwrap();
+    assert!(std::fs::metadata(&out).unwrap().len() > 1000);
+    let html = s
+        .report("description", "html", Path::new("projet.html"))
+        .unwrap();
+    assert!(std::fs::read_to_string(html)
+        .unwrap()
+        .contains("Spécification"));
+    assert!(s.report("inconnu", "html", Path::new("x.html")).is_err());
+
+    s.delete_snapshot(v1.id).unwrap();
+    assert!(s.snapshots().unwrap().is_empty());
+    drop(s);
+    let _ = std::fs::remove_dir_all(&dir);
+}

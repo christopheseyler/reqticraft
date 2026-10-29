@@ -468,3 +468,95 @@ impl Session {
         Ok(path.display().to_string())
     }
 }
+
+/// État d'un élément dans un instantané, pour son historique.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoryEntry {
+    pub snapshot: Option<rc_snapshot::SnapshotInfo>,
+    pub state: Option<rc_snapshot::ElementState>,
+}
+
+impl Session {
+    fn store(&self) -> Result<rc_snapshot::Store, String> {
+        crate::outputs::snapshots(&self.run)
+    }
+
+    pub fn snapshots(&self) -> Result<Vec<rc_snapshot::SnapshotInfo>, String> {
+        self.store()?.list().map_err(|e| e.to_string())
+    }
+
+    pub fn create_snapshot(&self, name: &str) -> Result<rc_snapshot::SnapshotInfo, String> {
+        self.store()?
+            .create(name, &crate::outputs::current_state(&self.run))
+            .map_err(|e| e.to_string())
+    }
+
+    pub fn delete_snapshot(&self, id: i64) -> Result<(), String> {
+        self.store()?.delete(id).map_err(|e| e.to_string())
+    }
+
+    /// Compare un instantané à un autre, ou à l'état courant (`to` absent).
+    pub fn compare(&self, from: i64, to: Option<i64>) -> Result<rc_snapshot::Diff, String> {
+        let store = self.store()?;
+        let old = store.load(from).map_err(|e| e.to_string())?;
+        let new = match to {
+            Some(t) => store.load(t).map_err(|e| e.to_string())?,
+            None => crate::outputs::current_state(&self.run),
+        };
+        Ok(rc_snapshot::diff(&old, &new))
+    }
+
+    /// Historique d'un élément : chaque instantané, puis l'état courant.
+    pub fn history(&self, d: usize, e: usize) -> Result<Vec<HistoryEntry>, String> {
+        let doc = self
+            .run
+            .analysis
+            .documents
+            .get(d)
+            .ok_or("document inconnu")?;
+        let el = doc.elements.get(e).ok_or("élément inconnu")?;
+        let current = crate::outputs::current_state(&self.run)
+            .elements
+            .into_iter()
+            .find(|s| {
+                s.document == doc.name
+                    && s.type_name == el.type_name
+                    && s.ident == el.ident
+                    && s.guid == el.guid
+            });
+        let Some((document, _, key)) = current.as_ref().and_then(|c| c.key()) else {
+            return Ok(Vec::new());
+        };
+        let mut out: Vec<HistoryEntry> = self
+            .store()?
+            .history(&document, &key)
+            .map_err(|e| e.to_string())?
+            .into_iter()
+            .map(|(s, state)| HistoryEntry {
+                snapshot: Some(s),
+                state,
+            })
+            .collect();
+        out.push(HistoryEntry {
+            snapshot: None,
+            state: current,
+        });
+        Ok(out)
+    }
+
+    /// Écrit un rapport et renvoie son chemin.
+    pub fn report(&self, template: &str, format: &str, path: &Path) -> Result<String, String> {
+        let template = rc_report::Template::parse(template)
+            .ok_or_else(|| format!("modèle « {template} » inconnu"))?;
+        let format = rc_report::Format::parse(format)
+            .ok_or_else(|| format!("format « {format} » inconnu"))?;
+        let path = if path.is_relative() {
+            self.run.loaded.dir.join(path)
+        } else {
+            path.to_owned()
+        };
+        crate::outputs::write_report(&self.run, template, Some(format), &path)?;
+        Ok(path.display().to_string())
+    }
+}

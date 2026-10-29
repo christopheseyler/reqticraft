@@ -359,7 +359,7 @@ Après le MVP :
 | Connecteurs P1 et P2 | Fait (avant M4, à la demande) : voir ci-dessous et `interop-formats.md` §12 |
 | M4 Interface v1 | Fait : ouverture de projet (sélecteur ou chemin, projets récents), tableau de bord, vues Couverture, Impact et Problèmes, panneau Détails, ouverture du document source, rechargement des documents modifiés avec marquage des éléments nouveaux ou modifiés |
 | M5 Édition et filtres | Fait : nouveau projet, éditeur de projet (diagramme des documents et des canaux, propriétés), éditeur de types (duplication, éléments, expressions, rôles des groupes, testeur sur un fichier avec l'intermédiaire), filtres (conditions ET/OU, paramètres `$nom`, application à l'affichage ou à l'analyse), enregistrement `.rqtf` + `.types` + `.filters` (XML) ou natif `.rcproj` (JSON) |
-| M6 Instantanés et rapports | À faire |
+| M6 Instantanés et rapports | Fait : instantanés SQLite (`<projet>.rcsnap`), comparaison (ajouts, suppressions, modifications, couvertures perdues ou gagnées), historique d'élément ; rapports Matrice de traçabilité, Résultats d'analyse, Description du projet, Contrôle des règles en HTML, XLSX, DOCX, CSV et Markdown ; CLI `snapshot`, `report`, `analyze --report` ; vues Instantanés et Rapports. **MVP atteint.** |
 
 Écarts par rapport au plan : le PDF utilise `pdf-extract` plutôt que PDFium (voir §2) ; un crate
 `rc-core` regroupe l'orchestration commune à la CLI et à l'application. Limites connues du P0 : pas de
@@ -374,6 +374,14 @@ compare les dates de modification toutes les deux secondes au lieu d'utiliser `n
 dépendance, même comportement pour l'utilisateur) ; l'interface utilise React et des CSS maison, sans
 Tailwind, Radix ni TanStack (listes paginées par le cœur, 200 éléments par page) ; le document source
 s'ouvre avec l'application associée du système, sans positionnement à l'élément.
+
+**Instantanés et rapports (M6).** `rc-snapshot` garde, par élément identifié, le texte, les
+attributs, les références et l'état de couverture (JSON dans SQLite, `rusqlite` avec SQLite intégré) ;
+la comparaison rapproche les éléments par document, type et GUID ou identifiant. `rc-report` construit
+un rapport neutre (sections, tableaux) puis le rend en HTML autonome, Markdown, CSV (`;`, UTF-8 avec
+BOM), XLSX (`rust_xlsxwriter`) ou DOCX (paquet WordprocessingML écrit directement). Écarts : modèles
+écrits en code et non en gabarits MiniJinja ; pas de sortie PDF (Typst) ; un instantané garde les
+résultats, pas les documents sources.
 
 **Édition et filtres (M5).** `rc-interop::write` écrit les `.rqtf`, `.types` et `.filters` au format
 XML que nos lecteurs reconnaissent (aller-retour testé). Le format natif `.rcproj` est un fichier JSON

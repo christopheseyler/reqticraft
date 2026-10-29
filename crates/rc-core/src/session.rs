@@ -930,6 +930,36 @@ pub fn call(session: &mut Option<Session>, method: &str, args: &Value) -> Result
             let saved = s.save(path)?;
             Ok(json!({ "path": saved }))
         }
+        "snapshots" => to_json(s.snapshots()?),
+        "createSnapshot" => to_json(s.create_snapshot(&arg::<String>(args, "name")?)?),
+        "deleteSnapshot" => {
+            s.delete_snapshot(arg(args, "id")?)?;
+            Ok(Value::Null)
+        }
+        "compare" => to_json(s.compare(arg(args, "from")?, arg(args, "to")?)?),
+        "history" => to_json(s.history(arg(args, "document")?, arg(args, "element")?)?),
+        "reportTemplates" => Ok(json!({
+            "templates": rc_report::Template::ALL
+                .iter()
+                .map(|t| json!({ "id": t.id(), "label": t.label() }))
+                .collect::<Vec<_>>(),
+            "formats": rc_report::Format::ALL
+                .iter()
+                .map(|f| f.extension())
+                .collect::<Vec<_>>(),
+        })),
+        "report" => {
+            let path: PathBuf = arg(args, "path")?;
+            let written = s.report(
+                &arg::<String>(args, "template")?,
+                &arg::<String>(args, "format")?,
+                &path,
+            )?;
+            if arg::<Option<bool>>(args, "open")?.unwrap_or(false) {
+                open_with_system(Path::new(&written))?;
+            }
+            Ok(json!({ "path": written }))
+        }
         _ => Err(format!("méthode inconnue : {method}")),
     }
 }
