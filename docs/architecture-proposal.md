@@ -357,12 +357,22 @@ Après le MVP :
 | M2 Moteur et analyse | Fait : capture par expressions (sections, profondeur, macro-exigences, exigences, entités, références, attributs, textes, exclusions, suppressions) ; couverture par canal, ET, OU ; dérivées ; règles principales ; CLI `analyze` |
 | M3 Convertisseurs P0 | Fait : texte, docx, xlsx/xls/ods/csv (texte et XML), PDF, code (répertoires), JSON, XML ; arbres d'analyse XML ; projets composites |
 | Connecteurs P1 et P2 | Fait (avant M4, à la demande) : voir ci-dessous et `interop-formats.md` §12 |
-| M4 à M6 | À faire (interface, édition, instantanés, rapports) |
+| M4 Interface v1 | Fait : ouverture de projet (sélecteur ou chemin, projets récents), tableau de bord, vues Couverture, Impact et Problèmes, panneau Détails, ouverture du document source, rechargement des documents modifiés avec marquage des éléments nouveaux ou modifiés |
+| M5 et M6 | À faire (édition, filtres, instantanés, rapports) |
 
 Écarts par rapport au plan : le PDF utilise `pdf-extract` plutôt que PDFium (voir §2) ; un crate
 `rc-core` regroupe l'orchestration commune à la CLI et à l'application. Limites connues du P0 : pas de
 `.doc` binaire, pas d'analyse syntaxique du code (fonctions), pas d'images ni de tableaux restitués,
 filtres lus mais pas encore appliqués.
+
+**Interface v1 (M4).** Le cœur expose une session (`rc-core::session`) : vue d'ensemble, pages
+d'éléments, détails, impact, problèmes, fichiers modifiés. L'application Tauri la relaie par une seule
+commande, `api` ; le serveur local `reqticraft serve` (127.0.0.1) relaie les mêmes requêtes, ce qui
+permet de développer et de tester l'interface dans un navigateur. Écarts : la surveillance des fichiers
+compare les dates de modification toutes les deux secondes au lieu d'utiliser `notify` (aucune
+dépendance, même comportement pour l'utilisateur) ; l'interface utilise React et des CSS maison, sans
+Tailwind, Radix ni TanStack (listes paginées par le cœur, 200 éléments par page) ; le document source
+s'ouvre avec l'application associée du système, sans positionnement à l'élément.
 
 **Connecteurs P1 et P2.**
 

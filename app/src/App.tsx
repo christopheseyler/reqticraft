@@ -1,32 +1,115 @@
-import { useEffect, useState } from "react";
-import { invoke, isTauri } from "@tauri-apps/api/core";
+import { useCallback, useEffect, useState } from "react";
+import { call, errorText } from "./api";
+import type { Overview, Selection, Severity } from "./types";
+import { Coverage, Dashboard, Home, Impact, Problems } from "./views";
 
-// Vues prévues (docs/functional-spec.md §4). Seul l'accueil existe à l'étape M0.
+// Vues de l'espace de travail (docs/functional-spec.md §4).
 const VIEWS = [
   { id: "home", label: "Accueil" },
   { id: "dashboard", label: "Tableau de bord" },
   { id: "coverage", label: "Couverture" },
   { id: "impact", label: "Impact" },
-  { id: "graph", label: "Graphe" },
-  { id: "requirements", label: "Exigences" },
   { id: "problems", label: "Problèmes" },
 ] as const;
 
 type ViewId = (typeof VIEWS)[number]["id"];
 
-interface AppInfo {
-  version: string;
+const RECENT_KEY = "reqticraft.recent";
+
+function loadRecent(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveRecent(list: string[]) {
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+  } catch {
+    // Stockage indisponible : la liste reste en mémoire.
+  }
 }
 
 export function App() {
   const [view, setView] = useState<ViewId>("home");
-  const [info, setInfo] = useState<AppInfo | null>(null);
+  const [overview, setOverview] = useState<Overview | null>(null);
+  const [version, setVersion] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [recent, setRecent] = useState<string[]>(loadRecent);
+  const [document, setDocument] = useState(0);
+  const [selection, setSelection] = useState<Selection | null>(null);
+  const [severity, setSeverity] = useState<Severity | "all">("all");
+  const [changed, setChanged] = useState<string[]>([]);
+  const [appVersion, setAppVersion] = useState("");
 
   useEffect(() => {
-    // Hors de Tauri (`npm run dev` dans un navigateur), le cœur Rust est absent.
-    if (isTauri()) {
-      invoke<AppInfo>("app_info").then(setInfo).catch(console.error);
+    call<{ version: string }>("version")
+      .then((v) => setAppVersion(v.version))
+      .catch(() => setAppVersion(""));
+    // Projet déjà ouvert côté serveur (`reqticraft serve projet.rqtf`).
+    call<Overview>("overview")
+      .then((o) => {
+        setOverview(o);
+        setView("dashboard");
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const open = useCallback(
+    async (path: string) => {
+      setBusy(true);
+      setError(null);
+      try {
+        const o = await call<Overview>("open", { path });
+        setOverview(o);
+        setSelection(null);
+        setDocument(0);
+        setChanged([]);
+        setVersion((v) => v + 1);
+        setView("dashboard");
+        const list = [path, ...recent.filter((r) => r !== path)].slice(0, 8);
+        setRecent(list);
+        saveRecent(list);
+      } catch (e) {
+        setError(errorText(e));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [recent],
+  );
+
+  const reload = useCallback(async () => {
+    setBusy(true);
+    try {
+      setOverview(await call<Overview>("reload"));
+      setChanged([]);
+      setVersion((v) => v + 1);
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setBusy(false);
     }
+  }, []);
+
+  // Surveillance des fichiers : le cœur compare les dates de modification.
+  useEffect(() => {
+    if (!overview) return;
+    const timer = window.setInterval(() => {
+      call<string[]>("changes")
+        .then(setChanged)
+        .catch(() => undefined);
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [overview]);
+
+  const select = useCallback((d: number, e: number) => {
+    setSelection({ document: d, element: e });
+    setDocument(d);
+    setView((v) => (v === "impact" ? v : "coverage"));
   }, []);
 
   return (
@@ -38,22 +121,61 @@ export function App() {
             key={v.id}
             className={v.id === view ? "nav-item active" : "nav-item"}
             aria-current={v.id === view ? "page" : undefined}
-            disabled={v.id !== "home"}
+            disabled={v.id !== "home" && !overview}
             onClick={() => setView(v.id)}
           >
             {v.label}
+            {v.id === "problems" && overview && overview.errors > 0 && (
+              <span className="nav-count">{overview.errors}</span>
+            )}
           </button>
         ))}
+        <div className="sidebar-foot muted">
+          {overview && <div className="project-name">{overview.name}</div>}
+          {appVersion && <div>Version {appVersion}</div>}
+        </div>
       </nav>
       <main className="content">
-        <h1>Bienvenue</h1>
-        <p>
-          Ouvrez un projet pour mesurer la couverture de vos exigences. L'ouverture de projets
-          arrive avec l'étape M1.
-        </p>
-        <p className="muted">
-          {info ? `Cœur ReqtiCraft ${info.version}` : "Cœur Rust non connecté (mode navigateur)"}
-        </p>
+        {changed.length > 0 && (
+          <div className="banner" role="status">
+            <span>
+              {changed.length === 1 ? "Un document a été modifié" : `${changed.length} documents ont été modifiés`}{" "}
+              sur le disque.
+            </span>
+            <button className="button" onClick={reload} disabled={busy}>
+              {busy ? "Analyse…" : "Recharger"}
+            </button>
+          </div>
+        )}
+        {view === "home" || !overview ? (
+          <Home recent={recent} onOpen={open} busy={busy} error={error} />
+        ) : view === "dashboard" ? (
+          <Dashboard
+            overview={overview}
+            onDocument={(d) => {
+              setDocument(d);
+              setView("coverage");
+            }}
+            onProblems={(s) => {
+              setSeverity(s);
+              setView("problems");
+            }}
+          />
+        ) : view === "coverage" ? (
+          <Coverage
+            overview={overview}
+            document={document}
+            setDocument={setDocument}
+            selection={selection}
+            onSelect={select}
+            onImpact={() => setView("impact")}
+            version={version}
+          />
+        ) : view === "impact" ? (
+          <Impact selection={selection} onSelect={select} version={version} />
+        ) : (
+          <Problems severity={severity} setSeverity={setSeverity} onSelect={select} version={version} />
+        )}
       </main>
     </div>
   );

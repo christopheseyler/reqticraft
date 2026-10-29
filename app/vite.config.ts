@@ -9,5 +9,7 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     watch: { ignored: ["**/src-tauri/**"] },
+    // Hors de Tauri, les requêtes vont au serveur local `reqticraft serve`.
+    proxy: { "/api": "http://127.0.0.1:7878" },
   },
 });

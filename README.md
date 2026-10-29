@@ -7,8 +7,8 @@ ReqtiCraft capture les exigences et leurs références directement dans les docu
 la couverture et l'analyse d'impact, contrôle des règles de cohérence et produit des rapports. Il sait
 importer les projets Reqtify existants.
 
-> État : connecteurs **P0, P1 et P2** disponibles en ligne de commande. L'interface graphique n'est
-> pas encore branchée.
+> État : **interface de bureau v1** (M4) et connecteurs **P0, P1 et P2**. L'édition de projet, les
+> filtres, les instantanés et les rapports arrivent avec M5 et M6.
 >
 > - Documents : texte, Word docx, tableurs, PDF, code source, JSON, XML, HTML, Markdown, AsciiDoc,
 >   RTF, OpenDocument, PowerPoint, FrameMaker MIF, ReqIF, Visio, MS Project, UML/SysML (XMI),
@@ -66,6 +66,32 @@ cargo run -p rc-cli -- convert "project = THS" --type Jira --param profile=jira
 Le transport HTTP utilise `curl` ; Git, Subversion, CVS, Perforce, `sqlplus`, `sqlite3`, `7z` et
 `mediainfo` sont utilisés s'ils sont installés. Les connecteurs propriétaires se branchent par le
 [protocole de plugins](docs/plugin-protocol.md).
+
+## Application de bureau
+
+L'application ouvre un projet `.rqtf` et affiche :
+
+- le **tableau de bord** : documents, exigences, couverture, dérivées et problèmes ;
+- la vue **Couverture** : éléments de chaque document, avec un filtre (non couvertes, dérivées,
+  modifiées…), une recherche et le panneau **Détails** (texte, attributs, « couvre », « couvert par »,
+  problèmes) ;
+- la vue **Impact** : ce que l'élément couvre en amont, et ce qui dépend de lui en aval, sur toute la
+  profondeur ;
+- la vue **Problèmes** : messages par sévérité et par règle, avec un lien vers l'élément.
+
+Quand un document change sur le disque, un bandeau propose de recharger. Après le rechargement, les
+éléments nouveaux ou modifiés sont signalés.
+
+```bash
+cd app && npm ci && npx tauri dev
+```
+
+Pour travailler sur l'interface dans un navigateur, le serveur local expose les mêmes requêtes que
+l'application de bureau, sur 127.0.0.1 seulement :
+
+```bash
+cargo run -p rc-cli -- serve fixtures/thermostat/text/thermostat.rqtf --ui app/dist
+```
 
 ## Documentation
 

@@ -14,6 +14,8 @@ use rc_model::{
 };
 use std::path::{Path, PathBuf};
 
+pub mod session;
+
 pub use rc_analysis;
 pub use rc_connect;
 pub use rc_convert;

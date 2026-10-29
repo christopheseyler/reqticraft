@@ -4,6 +4,7 @@
 //! ne sont pas encore implémentées et le disent.
 
 mod output;
+mod serve;
 
 use anyhow::{bail, Context, Result};
 use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
@@ -59,6 +60,17 @@ enum Command {
         /// Paramètre du document, `nom=valeur`, répétable.
         #[arg(long = "param", value_parser = parse_param)]
         params: Vec<(String, String)>,
+    },
+    /// Serveur local de l'interface (développement, accès en lecture).
+    #[command(hide = true)]
+    Serve {
+        /// Projet ouvert au démarrage.
+        project: Option<PathBuf>,
+        #[arg(long, default_value_t = 7878)]
+        port: u16,
+        /// Répertoire de l'interface compilée (`app/dist`).
+        #[arg(long, value_name = "RÉPERTOIRE")]
+        ui: Option<PathBuf>,
     },
 }
 
@@ -179,6 +191,10 @@ fn run(cli: Cli) -> Result<ExitCode> {
             } else {
                 ExitCode::SUCCESS
             })
+        }
+        Command::Serve { project, port, ui } => {
+            serve::serve(port, ui, project, &cli.config)?;
+            Ok(ExitCode::SUCCESS)
         }
         Command::Convert {
             file,
