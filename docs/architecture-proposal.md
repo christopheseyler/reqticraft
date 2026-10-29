@@ -45,7 +45,9 @@ reqticraft/
 │  ├─ rc-model        # types de données (§4), sérialisation native
 │  ├─ rc-interop      # lecture/écriture .rqtf (XML+INI), .types (XML+INI), .filters, .marks,
 │  │                  #   ModificationDocument, Reviewer XML ; rapport d'import
-│  ├─ rc-convert      # trait Converter + convertisseurs intégrés : text, docx, xlsx/csv, pdf, code, xml, json
+│  ├─ rc-convert      # convertisseurs de fichiers : text, docx, xlsx/csv, pdf, code, xml, json,
+│  │                  #   html, markdown, rtf, odt, pptx, mif, reqif, vsdx, mspdi, xmi, médias, propriétés
+│  ├─ rc-connect      # types d'accès (zip, http, git, svn…), outils ALM, journaux de versions, bases
 │  ├─ rc-capture      # moteur de capture : regex (texte) et arbres d'analyse (XML) → éléments
 │  ├─ rc-analysis     # résolution des références, couverture, impact, règles, filtres
 │  ├─ rc-snapshot     # instantanés SQLite, comparaison, historique d'élément
@@ -346,7 +348,7 @@ Après le MVP :
 | Connecteurs propriétaires (DOORS, CATIA, ENOVIA) | Élevé pour certains clients | Plugins tiers ; priorité aux formats d'échange (ReqIF, XML d'export) |
 | Propriété intellectuelle et marques | Élevé | Clean room documentée, aucun fichier Dassault dans le dépôt, nom et interface originaux |
 
-## 10. Avancement (2026-10-28)
+## 10. Avancement (2026-10-29)
 
 | Étape | État |
 |---|---|
@@ -354,9 +356,28 @@ Après le MVP :
 | M1 Lecture des projets | Fait : `.rqtf`, `.types`, `.filters`, `.marks`, documents de modification, dans les deux formats ; 50/50 projets d'exemple lus |
 | M2 Moteur et analyse | Fait : capture par expressions (sections, profondeur, macro-exigences, exigences, entités, références, attributs, textes, exclusions, suppressions) ; couverture par canal, ET, OU ; dérivées ; règles principales ; CLI `analyze` |
 | M3 Convertisseurs P0 | Fait : texte, docx, xlsx/xls/ods/csv (texte et XML), PDF, code (répertoires), JSON, XML ; arbres d'analyse XML ; projets composites |
+| Connecteurs P1 et P2 | Fait (avant M4, à la demande) : voir ci-dessous et `interop-formats.md` §12 |
 | M4 à M6 | À faire (interface, édition, instantanés, rapports) |
 
 Écarts par rapport au plan : le PDF utilise `pdf-extract` plutôt que PDFium (voir §2) ; un crate
 `rc-core` regroupe l'orchestration commune à la CLI et à l'application. Limites connues du P0 : pas de
 `.doc` binaire, pas d'analyse syntaxique du code (fonctions), pas d'images ni de tableaux restitués,
 filtres lus mais pas encore appliqués.
+
+**Connecteurs P1 et P2.**
+
+| Famille | Réalisé | Vérifié par |
+|---|---|---|
+| Documents | HTML, Markdown, AsciiDoc, RTF, OpenDocument Texte, PowerPoint `.pptx`, FrameMaker MIF | Corpus maison complet (mêmes résultats que les formats P0) ; exemples Reqtify AsciiDoc, OpenOffice Writer et Calc avec leurs types |
+| Formats structurés | ReqIF/ReqIFz, Visio `.vsdx`, MS Project XML, UML/SysML XMI et `.mdzip`, médias (MediaInfo ou lecteur intégré), propriétés de fichiers | Corpus maison (ReqIF complet ; autres en sources couvrant la spécification) |
+| Types d'accès | ZIP (7-Zip par `7z`), HTTP(S)/FTP, Git, GitHub, Bitbucket, Subversion, CVS, Perforce, Google Drive (Docs, Sheets, Slides exportés), OneDrive, commande externe (ClearCase, Synergy, PVCS, Documentum, ProjectWise, DesignSync) | ZIP, HTTP, Google Drive et Git testés (serveur HTTP simulé, dépôt Git réel) ; Subversion, CVS, Perforce et OneDrive non testés faute d'outil ou de serveur |
+| Outils ALM | Jira, Redmine, Bugzilla, codebeamer, Jama, Polarion, DOORS Next (API de publication), OSLC Change Management | Jira et Redmine contre un serveur simulé (pagination, authentification) ; tous en mode fichier sur le corpus maison ; aucun serveur réel |
+| Historiques | Git, Subversion, Perforce (forme `svn log --xml`) | Git sur un dépôt réel ; Perforce sur une sortie type |
+| Bases de données | Access et ODBC (PowerShell, Windows), Oracle (`sqlplus`), SQLite (`sqlite3`) | Exemple Reqtify Access : 5 + 5 exigences, couverture 100 % ; Oracle et SQLite non testés |
+| Plugins | Protocole JSON-RPC sur stdio (`docs/plugin-protocol.md`), découverte dans `plugins/` | Plugin de démonstration lancé par les tests |
+
+Écarts : les connecteurs P1/P2 sont intégrés au cœur plutôt qu'en plugins (principe 5) : ce sont des
+lecteurs de formats ouverts ou de simples clients REST, sans dépendance propriétaire. Le protocole de
+plugins reste la voie des connecteurs propriétaires. Le registre crates.io étant injoignable pendant
+le développement, aucune nouvelle bibliothèque n'a été ajoutée hormis `html5ever` (déjà en cache) :
+transport HTTP par `curl`, ODBC par PowerShell, Markdown, RTF et MIF lus par du code maison.

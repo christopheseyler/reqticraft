@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Conception du thermostat</title></head><body>
+<h1>1. Conception du thermostat</h1>
+<p>Document de test ReqtiCraft, créé pour le corpus maison.</p>
+<h2>2. Acquisition</h2>
+<p>DES_REQ1 : Échantillonnage du capteur</p>
+<p>Le capteur est lu par interruption toutes les 10 s.</p>
+<p>[Covers: THS_REQ1]</p>
+<p>DES_REQ2 : Étalonnage</p>
+<p>Une table d'étalonnage en 16 points corrige la non-linéarité du capteur.</p>
+<p>[Covers: THS_REQ2]</p>
+<h2>3. Régulateur</h2>
+<p>DES_REQ3 : Bornes de consigne</p>
+<p>La consigne est saturée entre 7 °C et 30 °C.</p>
+<p>[Covers: THS_REQ3]</p>
+<p>DES_REQ4 : Commande tout-ou-rien</p>
+<p>Le relais est commandé avec un seuil haut et un seuil bas.</p>
+<p>[Covers: THS_REQ4]</p>
+<p>DES_REQ5 : API de consigne</p>
+<p>Une API REST expose la lecture et l'écriture de la consigne.</p>
+<p>[Covers: THS_REQ6, THS_REQ99]</p>
+<h2>4. Exigences dérivées</h2>
+<p>DES_REQ6 : Chien de garde</p>
+<p>Un chien de garde redémarre le microcontrôleur après 2 s sans activité.</p>
+<p>DES_REQ7 : Journal d'erreurs</p>
+<p>Les 100 dernières erreurs sont conservées en mémoire non volatile.</p>
+</body></html>

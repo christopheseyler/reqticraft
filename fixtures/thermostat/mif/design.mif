@@ -1,0 +1,27 @@
+<MIFFile 2019> # Corpus de test ReqtiCraft
+<TextFlow <TFTag `A'>
+ <Para <PgfTag `Heading1'> <ParaLine <String `1. Conception du thermostat'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `Document de test ReqtiCraft, créé pour le corpus maison.'>>>
+ <Para <PgfTag `Heading2'> <ParaLine <String `2. Acquisition'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `DES_REQ1 : Échantillonnage du capteur'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Le capteur est lu par interruption toutes les 10 s.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `[Covers: THS_REQ1]'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `DES_REQ2 : Étalonnage'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Une table d\qétalonnage en 16 points corrige la non-linéarité du capteur.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `[Covers: THS_REQ2]'>>>
+ <Para <PgfTag `Heading2'> <ParaLine <String `3. Régulateur'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `DES_REQ3 : Bornes de consigne'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `La consigne est saturée entre 7 °C et 30 °C.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `[Covers: THS_REQ3]'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `DES_REQ4 : Commande tout-ou-rien'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Le relais est commandé avec un seuil haut et un seuil bas.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `[Covers: THS_REQ4]'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `DES_REQ5 : API de consigne'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Une API REST expose la lecture et l\qécriture de la consigne.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `[Covers: THS_REQ6, THS_REQ99]'>>>
+ <Para <PgfTag `Heading2'> <ParaLine <String `4. Exigences dérivées'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `DES_REQ6 : Chien de garde'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Un chien de garde redémarre le microcontrôleur après 2 s sans activité.'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `DES_REQ7 : Journal d\qerreurs'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Les 100 dernières erreurs sont conservées en mémoire non volatile.'>>>
+>

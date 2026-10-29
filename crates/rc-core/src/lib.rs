@@ -4,6 +4,8 @@
 //! C'est le point d'entrée commun à la ligne de commande et à l'application.
 
 use rc_analysis::{Analysis, ChannelInput};
+use rc_connect::access::{self, Want};
+use rc_connect::{Connector, Context, Profiles};
 use rc_convert::{ConvertOptions, ConverterId, Intermediate};
 use rc_interop::{LoadedProject, TypeLibrary};
 use rc_model::{
@@ -13,6 +15,7 @@ use rc_model::{
 use std::path::{Path, PathBuf};
 
 pub use rc_analysis;
+pub use rc_connect;
 pub use rc_convert;
 pub use rc_interop;
 pub use rc_model;
@@ -36,6 +39,14 @@ const LIBRARY: &[(&str, &str)] = &[
     ("pdf.types", include_str!("../library/pdf.types")),
     ("code.types", include_str!("../library/code.types")),
     ("json.types", include_str!("../library/json.types")),
+    ("document.types", include_str!("../library/document.types")),
+    ("markup.types", include_str!("../library/markup.types")),
+    (
+        "structured.types",
+        include_str!("../library/structured.types"),
+    ),
+    ("alm.types", include_str!("../library/alm.types")),
+    ("history.types", include_str!("../library/history.types")),
 ];
 
 /// Types d'analyse livrés avec ReqtiCraft.
@@ -273,6 +284,97 @@ pub fn convert_document(
     rc_convert::convert(id, path, options).map_err(|e| e.to_string())
 }
 
+/// Répertoire de travail d'un document (copies locales, caches des connecteurs).
+pub fn work_dir(entry: &DocumentEntry) -> PathBuf {
+    let safe: String = entry
+        .name
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() || matches!(c, '-' | '_' | '.') {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    entry.base_dir.join(".reqticraft").join("work").join(safe)
+}
+
+/// Emplacement du document tel qu'écrit dans le projet (chemin, URL ou requête).
+pub fn location(entry: &DocumentEntry) -> String {
+    entry.decl.path.to_string_lossy().into_owned()
+}
+
+/// Produit l'intermédiaire d'un document : convertisseur intégré (après
+/// rapatriement par un type d'accès si l'emplacement est distant ou archivé),
+/// connecteur (outil ALM, journal de versions, base de données, commande) ou
+/// plugin. En cas d'échec : identifiant de règle et message.
+pub fn intermediate(
+    entry: &DocumentEntry,
+    doc_type: &DocumentType,
+) -> Result<Intermediate, (&'static str, String)> {
+    let profiles = Profiles::load(&entry.base_dir);
+    let location = location(entry);
+    let ctx = Context {
+        base_dir: &entry.base_dir,
+        work_dir: work_dir(entry),
+        profiles: &profiles,
+        params: &entry.decl.params,
+    };
+    if let Some(id) = ConverterId::for_tool(&doc_type.converter) {
+        let want = Want {
+            directory: !doc_type.matching_file_names.is_empty()
+                || doc_type
+                    .properties
+                    .iter()
+                    .any(|(k, v)| k.eq_ignore_ascii_case("ForceProcessingAsDirectory") && v == "1"),
+            extensions: &doc_type.file_extensions,
+        };
+        let path = if access::is_remote(&location, &ctx, want) {
+            access::resolve(&location, &ctx, want)
+                .map_err(|e| ("unreadableDocument", e.to_string()))?
+        } else {
+            document_path(entry)
+        };
+        if !path.exists() {
+            return Err((
+                "unreadableDocument",
+                format!("fichier introuvable : {}", path.display()),
+            ));
+        }
+        return rc_convert::convert(id, &path, &convert_options(doc_type, &entry.decl))
+            .map_err(|e| ("conversionProblem", e.to_string()));
+    }
+    if let Some(connector) = Connector::for_tool(&doc_type.converter) {
+        return connector
+            .run(&location, &ctx)
+            .map_err(|e| ("conversionProblem", e.to_string()));
+    }
+    if let Some(plugin) = rc_plugin::discover(&entry.base_dir)
+        .into_iter()
+        .find(|p| p.provides(&doc_type.converter))
+    {
+        let out = plugin
+            .convert(
+                &doc_type.converter,
+                &location,
+                &entry.decl.params,
+                &entry.base_dir,
+                &ctx.work_dir,
+            )
+            .map_err(|e| ("conversionProblem", e.to_string()))?;
+        return Ok(if out.xml {
+            Intermediate::Xml(out.content)
+        } else {
+            Intermediate::Text(out.content)
+        });
+    }
+    Err((
+        "unknownConvertMethod",
+        format!("convertisseur « {} » non disponible", doc_type.converter),
+    ))
+}
+
 /// Résultat complet : projet chargé, documents aplatis et analyse.
 pub struct ProjectRun {
     pub loaded: LoadedProject,
@@ -333,31 +435,13 @@ pub fn capture_document(entry: &DocumentEntry) -> CapturedDocument {
     if doc_type.kind == TypeKind::AddedElements {
         return doc;
     }
-    if ConverterId::for_tool(&doc_type.converter).is_none() {
-        fail(
-            &mut doc,
-            "unknownConvertMethod",
-            format!("convertisseur « {} » non disponible", doc_type.converter),
-        );
-        return doc;
-    }
-    let path = document_path(entry);
-    if !path.exists() {
-        fail(
-            &mut doc,
-            "unreadableDocument",
-            format!("fichier introuvable : {}", path.display()),
-        );
-        return doc;
-    }
-    let intermediate =
-        match convert_document(doc_type, &path, &convert_options(doc_type, &entry.decl)) {
-            Ok(i) => i,
-            Err(e) => {
-                fail(&mut doc, "conversionProblem", e);
-                return doc;
-            }
-        };
+    let intermediate = match intermediate(entry, doc_type) {
+        Ok(i) => i,
+        Err((rule, text)) => {
+            fail(&mut doc, rule, text);
+            return doc;
+        }
+    };
     let mut effective = doc_type.clone();
     for et in &mut effective.element_types {
         if entry.decl.ignored_types.contains(&et.name) {
@@ -462,10 +546,54 @@ mod tests {
         let names: Vec<_> = types.iter().map(|t| t.name.as_str()).collect();
         assert_eq!(
             names,
-            ["Text", "Word", "Excel", "ExcelXML", "PDF", "Code", "JSON", "XML"]
+            [
+                "Text",
+                "Word",
+                "Excel",
+                "ExcelXML",
+                "PDF",
+                "Code",
+                "JSON",
+                "XML",
+                "Writer",
+                "RTF",
+                "FrameMaker MIF",
+                "HTML",
+                "Markdown",
+                "AsciiDoc",
+                "PowerPoint",
+                "ReqIF",
+                "Visio",
+                "MS Project",
+                "SysML",
+                "Media",
+                "File Properties",
+                "Jira",
+                "Redmine",
+                "Bugzilla",
+                "codebeamer",
+                "Jama",
+                "Polarion",
+                "DOORS Next",
+                "Change Management",
+                "Git Log",
+                "SVN Log",
+                "Perforce Log",
+                "Database"
+            ]
         );
         for t in &types {
-            assert!(ConverterId::for_tool(&t.converter).is_some(), "{}", t.name);
+            assert!(
+                ConverterId::for_tool(&t.converter).is_some()
+                    || Connector::for_tool(&t.converter).is_some(),
+                "{}",
+                t.name
+            );
+            // Les motifs XML se compilent sans erreur.
+            if t.kind == TypeKind::Xml {
+                let doc = rc_capture::capture(t, "x", "<root/>", true);
+                assert!(doc.messages.is_empty(), "{} : {:?}", t.name, doc.messages);
+            }
             for et in &t.element_types {
                 match &et.rule {
                     rc_model::CaptureRule::Regex { expression, .. } => {

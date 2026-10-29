@@ -9,9 +9,11 @@ publish.workspace = true
 [dependencies]
 calamine = "0.35.0"
 csv = "1.4.0"
+encoding_rs = "0.8.42"
+html5ever = "0.39.0"
 lopdf = "0.42.0"
 pdf-extract = "0.12.1"
-rc-interop = { version = "0.1.0", path = "../rc-interop" }
+rc-interop.workspace = true
 roxmltree = "0.21.2"
 serde_json = { workspace = true, features = ["preserve_order"] }
 thiserror = "2"

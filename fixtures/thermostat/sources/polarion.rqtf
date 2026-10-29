@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+<Document name="Spécification" positionX="800" positionY="400" type="Text" path="../text/specification.txt">
+</Document>
+<Document name="Source" positionX="1500" positionY="1000" type="Polarion" path="polarion.json">
+</Document>
+<Cover outputDocument="Spécification" positionX="0" positionY="0">
+<InputDocument name="Source" />
+</Cover>
+</Project>

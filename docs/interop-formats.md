@@ -510,6 +510,10 @@ n'est nécessaire.
 | Q6b | Intermédiaire PDF : séparateur exact entre style et texte, nommage des images, effet de chaque règle de paragraphe | Option « Intermediate File » sur des PDF maison (titres avec signets, tableaux, images, annotations, césures, colonnes). |
 | Q7 | Paramètres de document en INI | Enregistrer un projet avec `withImages=1` en ancien format. |
 | Q8 | Correspondance INI ↔ XML des `.types` | Bascule « Old format » dans l'éditeur de types, puis comparaison. |
+| Q9 | Représentation d'un **type d'accès** (ZIP, HTTP, Git, Subversion…) et de ses paramètres (profil, branche, révision) dans le `.rqtf` | Créer un document de chaque type d'accès, enregistrer dans les deux formats, comparer. En attendant, ReqtiCraft lit des URI dans le chemin (§12.2). |
+| Q10 | Intermédiaire PowerPoint : le dernier `NOTES` est-il suivi d'un marqueur (l'expression `NOTES([\s\S]*?)SLIDE` du type livré ne capture pas les notes de la dernière diapositive) ? Texte des masques (`MASTER`, `CUSTOM_LAYOUT`) | Option « Intermediate File » sur une présentation maison. |
+| Q11 | Signification des `id` de `<Property>` du type File Properties (`id="1"`, `id="2"`, `id="10"`) | Option « Intermediate File » sur un fichier aux propriétés connues. |
+| Q12 | Forme exacte des intermédiaires HTML (balise `A`, classe sur `P`), Visio (`<Property>` sous `<Shape>` ou sous `<Page>`) et MS Project (`TaskDependency to` : nom ou identifiant) | Option « Intermediate File » sur des documents maison. |
 
 Les résultats seront consignés dans `docs/interop-evidence/` (fichiers produits + note datée), avec
 l'étiquette **[BB]** (boîte noire).
@@ -536,3 +540,116 @@ l'étiquette **[BB]** (boîte noire).
   (`conversionProblem`, la majorité des exemples « Use Cases »), et convertisseurs propriétaires
   (`CScan` pour l'analyse syntaxique C/Java, `DoorsXML`, `FrameMaker`, `CSVtoXML`, `Word2Xml`…,
   règle `unknownConvertMethod`).
+
+## 12. Connecteurs P1 et P2 (2026-10-29)
+
+Les connecteurs P1 et P2 suivent le même principe que les P0 : un convertisseur produit un intermédiaire,
+qu'un type d'analyse capture. Pour réutiliser les types des clients, ReqtiCraft produit, chaque fois que
+c'est possible, **l'intermédiaire de la forme attendue par les types livrés**. Cette forme se lit dans les
+expressions et arbres d'analyse de ces types : c'est la preuve principale de cette section **[EX]**. Les
+Coupling Notes **[DOC]** la complètent. Aucun convertisseur d'origine n'a été exécuté ni inspecté.
+
+### 12.1 Formats de documents (`rc-convert`)
+
+| Format | Intermédiaire | Preuve |
+|---|---|---|
+| HTML | Lignes `H1`…`H6`, `P`, `LI`, `PRE` + tabulation + texte ; `.classe` après la balise ; `#TABLE`, `#TR`, `\|<col> TD<TAB>texte` ; `<Picture<src>` | [DOC] HTML Coupling Notes « Supported HTML tags » ; [EX] `Office/html.types` (`^H(\d)(?:\.[^\t]+)?\t(.+)`, `Section1Indexes=6,1,3,0`) |
+| Markdown | Même forme que HTML (connecteur nouveau, sans équivalent d'origine) | — |
+| AsciiDoc | Texte brut (aucun convertisseur) | [EX] `Office/AsciiDoc.types` : pas de `Tool`, expressions sur le texte source (`^= (.+)`) ; validé sur `EX\Coupling\AsciiDoc` (3 exigences) |
+| RTF | Lignes stylées comme Word : `<style><TAB><numéro><séparateur><texte>`, tableaux `\|<col><style> texte` | [DOC] RTF Coupling Notes « Basics », « RTF Tables » ; [EX] `Office/rtf.types` (`^heading (\d+)\t…`) |
+| OpenDocument Texte | Lignes stylées, nom affiché du style (`Heading 1`, `Requirement_ID`) | [DOC] OpenOffice Writer Coupling Notes ; [EX] `Office/openOfficeWriter.types`, `LibreOfficeWriter.types` ; validé sur `EX\Coupling\OpenOffice Writer` (5 exigences) |
+| OpenDocument Classeur | Comme Excel (P0, via `calamine`) | [EX] `Office/openOfficeCalc.types` ; validé sur `EX\Coupling\OpenOffice Calc` (5 exigences) |
+| PowerPoint `.pptx` (et Google Slides exporté) | `SLIDE <n>`, `SHAPES`, une ligne par paragraphe, `NOTES`, `COMMENTS`, `PICTURE <fichier>` | [DOC] PowerPoint Coupling Notes « Encoding » ; [EX] `Office/powerpoint.types`, `googleSlide.types` |
+| FrameMaker (MIF) | Lignes stylées `<balise><TAB><numéro><texte>` ; tableaux à leur ancre | [DOC] FrameMaker Coupling Notes ; [EX] `Office/framemaker.types` (`^Heading1\t([\d\.*]+)\s+(.+)`). Les `.fm` et `.book` binaires exigent FrameMaker. |
+| ReqIF / ReqIFz | XML ReqtiCraft résolu : `<Specification>`, `<Object ident kind label text>`, `<Attribute>`, `<Link>` | Norme OMG ReqIF 1.2 ; pas de type d'origine (connecteur nouveau) |
+| Visio `.vsdx` | `<Document><Page name><Shape name text><Property name value/></Shape><Connector sourceName targetName/></Page>` | [DOC] Visio Coupling Notes « Intermediate File » (exemple) ; [EX] `Office/visio.types`. Place des `<Property>` : Q12 |
+| MS Project (XML MSPDI) | `<Task name notes text1 text2 percentcomplete hyperlink><Resource name emailaddress/><TaskDependency to/></Task>` | [DOC] Project Coupling Notes (champs extraits) ; [EX] `Project/msproject.types`. Le `.mpp` binaire exige MS Project |
+| UML/SysML (XMI, `.mdzip`) | XMI d'origine, suivi d'un `<Summary>` ReqtiCraft (stéréotypes et relations résolus) | [EX] `UML/MagicDraw.types` (arbres sur le XMI brut : `packagedElement xmi:type=…`) ; normes OMG XMI, UML, SysML |
+| Médias | `<MediaInfo><media ref><track type="General"><Format/><Duration/><Comment/></track>…` ; sortie de l'outil MediaInfo s'il est installé | [DOC] MediaInfo Coupling Notes ; [EX] `Office/MediaInfo.types` |
+| Propriétés de fichiers | `<FolderItem name path><Property id name value/>` | [EX] `Project/fileProperties.types` ; numérotation des `id` : Q11 |
+
+### 12.2 Types d'accès (`rc-connect::access`)
+
+**[DOC]** Plusieurs Coupling Notes décrivent un même mécanisme : ZIP, HTTP, Git, GitHub, Bitbucket,
+Subversion, CVS, Perforce, PVCS, Synergy, ClearCase, Documentum, ProjectWise, DesignSync, Google Drive et
+OneDrive. On choisit un « access type » pour un document ; l'outil en obtient une **copie locale**
+(« intermediate access file »), puis l'analyse avec le type d'analyse du document. Règles reprises :
+
+- **ZIP** : pour un type multitype (répertoire), toute l'archive est extraite. Sinon, seul le premier
+  fichier ayant l'extension attendue est extrait, ou à défaut le premier fichier **[DOC]** ZIP Coupling
+  Notes « Selecting the ZIP/7-Zip Access Type ». Les archives 7-Zip passent par `7z.exe`.
+- **Git, GitHub, Bitbucket** : clone complet, une copie par branche (`dépôt.git_branche`), modifications
+  locales conservées à la mise à jour **[DOC]** Git Coupling Notes « Specific Parameters ».
+- **Subversion et CVS** : copie de travail ; paramètre `Revision` pour Subversion, `Tag` et `CVSROOT` pour
+  CVS **[DOC]**.
+
+La représentation d'un type d'accès dans le `.rqtf` n'est pas connue (Q9). En attendant, ReqtiCraft
+accepte un paramètre `access`, ou un **URI dans le chemin du document** :
+- `https://…` (téléchargement) ;
+- `zip:a.zip!b.docx` (fichier d'une archive) ;
+- `git+https://…#branche:chemin` et `github:propriétaire/dépôt@branche/chemin` ;
+- `svn+…`, `cvs:…`, `p4://…` ;
+- `gdrive:<id>`, `onedrive:<chemin>` ;
+- `command:…` (commande externe).
+
+Les outils sans connecteur dédié passent par cette commande, déclarée dans le profil de connexion :
+ClearCase, Synergy, PVCS, Documentum, ProjectWise et DesignSync.
+
+### 12.3 Outils ALM (`rc-connect::alm`)
+
+| Outil | Requête du document | Intermédiaire | Preuve de la forme |
+|---|---|---|---|
+| Jira | JQL (API REST `search`) ; un export XML (RSS) est repris tel quel | `<issues key><fields summary description><priority name/>…` | [EX] `Project/JIRA.types` (2ᵉ type : `<issues key='$i'><fields summary='$l' description='$t'>`) ; validé sur `EX\Coupling\JIRA` (export XML, 2 exigences) |
+| Redmine | Paramètres de `issues.xml` | XML natif de l'API (`<issue><id/><subject/><priority name/>`) | [EX] `Project/Redmine.types` |
+| Bugzilla | Paramètres de `/rest/bug` | `<Bug><id/><summary/><comment/><whiteboard/>…` | [EX] `Project/bugzilla.types` |
+| codebeamer | cbQL (`/api/v3/items/query`) | `<items id name description><parent id/><status name/>` | [EX] `Project/codeBeamer.types` |
+| Jama | `project=<id>` ou `filter=<id>` | `<Item id name itemType description parent><Field label value/><Upstreamrelationship from type/>` | [EX] `Requirement Tools/JAMA.types` |
+| Polarion | Requête Lucene et paramètre `project` (API REST) | `<WorkItem id title type status … linkedWorkItems="rôle={projet}ID,…"><Hyperlink uri/>` | [EX] `Requirement Tools/Polarion.types` (`linkedWorkItems='$iverifies=[^,]+\}([^,]+)'`) |
+| DOORS Next | URL de l'API de publication (`/rm/publish/…`), XML repris tel quel | `ds:artifact`, `rrm:identifier`… | [EX] `Requirement Tools/DoorsNG.types` |
+| Gestion des modifications (OSLC CM) | URL d'une requête OSLC | `<WorkItem url title description shortId severity status priority type>` | [EX] `Project/CCM.types` ; spécification OSLC CM 3.0 |
+| DOORS classique | Exports ReqIF ou tableur | Le XML de la passerelle d'origine (`<Object number><Attribute name value>…`) n'est produit que par DOORS | [EX] `Requirement Tools/DOORS.types` |
+
+**Identifiants.** Ils viennent d'un profil de connexion, un fichier INI hors du projet. Ce profil ne
+contient pas le secret : il nomme la variable d'environnement qui le contient (`tokenEnv`,
+`passwordEnv`). Le transport HTTP(S)/FTP passe par l'outil `curl`, qui reçoit le secret par l'entrée
+standard.
+
+**Mode hors ligne.** Une réponse d'API enregistrée dans un fichier est convertie sans connexion, ce qui
+sert au corpus de test et au travail hors ligne.
+
+### 12.4 Historiques de versions
+
+| Source | Intermédiaire | Preuve |
+|---|---|---|
+| Subversion | `svn log --xml -v` tel quel : `<log><logentry revision><author/><date/><msg/><paths/>` | [DOC] Subversion Coupling Notes « Intermediate File » (révision, auteur, date, message) ; [EX] `Project/svn.types` (`<logentry revision="$i"><msg>$t</msg>`, `ForceProcessingAsDirectory=1`) |
+| Git, Perforce | Même forme que Subversion (choix ReqtiCraft, pour réutiliser les mêmes types) | — |
+
+### 12.5 Bases de données
+
+**[DOC]** Selon les Access Coupling Notes (« Intermediate XML File with Access Objects »), l'intermédiaire
+a la forme suivante :
+- `<table name="…">` pour la table ;
+- un `<record>` par ligne ;
+- `<cell name="colonne">valeur</cell>` par cellule.
+
+Le pilote ODBC « Microsoft Access Driver (*.mdb, *.accdb) » suffit à la conversion. Oracle passe par
+`sqlplus` et un profil (serveur, base, utilisateur) **[DOC]** Oracle Coupling Notes.
+
+ReqtiCraft produit cette forme pour :
+- Access et toute source ODBC, via PowerShell sous Windows ;
+- Oracle, via `sqlplus` ;
+- SQLite, via `sqlite3`.
+
+**Validation.** Sur `EX\Coupling\Access\Access_Demo.rqtf`, avec les types d'origine, on obtient
+5 exigences de haut niveau et 5 de bas niveau, avec une couverture de 100 %, conforme au contenu de la
+base.
+
+### 12.6 Hors de portée
+
+Les éléments suivants n'ont ni format ouvert ni outil disponible. Ils restent à traiter par le protocole
+de plugins (`docs/plugin-protocol.md`) ou par une commande externe :
+- formats binaires `.doc`, `.ppt`, `.vsd`, `.mpp`, `.fm` et `.book` ;
+- convertisseurs d'analyse syntaxique `CScan`, `VhdlScan`, `Ada`, `Dymola` ;
+- RequisitePro (`RequisiteProXml`), passerelle DOORS (`DoorsXML`, `DoorsBaselineSet`), PTC Integrity,
+  Teamwork Cloud, SolidWorks ;
+- l'écosystème Dassault (P3).

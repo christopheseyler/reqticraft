@@ -4,6 +4,7 @@ members = [
     "crates/rc-model",
     "crates/rc-interop",
     "crates/rc-convert",
+    "crates/rc-connect",
     "crates/rc-capture",
     "crates/rc-analysis",
     "crates/rc-snapshot",
@@ -15,7 +16,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.85"
 publish = false
@@ -24,6 +25,7 @@ publish = false
 rc-model = { path = "crates/rc-model" }
 rc-interop = { path = "crates/rc-interop" }
 rc-convert = { path = "crates/rc-convert" }
+rc-connect = { path = "crates/rc-connect" }
 rc-capture = { path = "crates/rc-capture" }
 rc-analysis = { path = "crates/rc-analysis" }
 rc-snapshot = { path = "crates/rc-snapshot" }

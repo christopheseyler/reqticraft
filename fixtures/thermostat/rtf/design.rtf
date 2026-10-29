@@ -1,0 +1,27 @@
+{\rtf1\ansi\ansicpg1252\deff0{\fonttbl{\f0 Arial;}}
+{\stylesheet{\s0 Normal;}{\s1\sbasedon0 heading 1;}{\s2\sbasedon0 heading 2;}{\s3\sbasedon0 Requirement_ID;}{\s4\sbasedon0 Requirement_Text;}}
+\pard\s1 1. Conception du thermostat\par
+\pard\s0 Document de test ReqtiCraft, cr\u233?\u233? pour le corpus maison.\par
+\pard\s2 2. Acquisition\par
+\pard\s3 DES_REQ1 : \u201?chantillonnage du capteur\par
+\pard\s4 Le capteur est lu par interruption toutes les 10 s.\par
+\pard\s0 [Covers: THS_REQ1]\par
+\pard\s3 DES_REQ2 : \u201?talonnage\par
+\pard\s4 Une table d'\u233?talonnage en 16 points corrige la non-lin\u233?arit\u233? du capteur.\par
+\pard\s0 [Covers: THS_REQ2]\par
+\pard\s2 3. R\u233?gulateur\par
+\pard\s3 DES_REQ3 : Bornes de consigne\par
+\pard\s4 La consigne est satur\u233?e entre 7 \u176?C et 30 \u176?C.\par
+\pard\s0 [Covers: THS_REQ3]\par
+\pard\s3 DES_REQ4 : Commande tout-ou-rien\par
+\pard\s4 Le relais est command\u233? avec un seuil haut et un seuil bas.\par
+\pard\s0 [Covers: THS_REQ4]\par
+\pard\s3 DES_REQ5 : API de consigne\par
+\pard\s4 Une API REST expose la lecture et l'\u233?criture de la consigne.\par
+\pard\s0 [Covers: THS_REQ6, THS_REQ99]\par
+\pard\s2 4. Exigences d\u233?riv\u233?es\par
+\pard\s3 DES_REQ6 : Chien de garde\par
+\pard\s4 Un chien de garde red\u233?marre le microcontr\u244?leur apr\u232?s 2 s sans activit\u233?.\par
+\pard\s3 DES_REQ7 : Journal d'erreurs\par
+\pard\s4 Les 100 derni\u232?res erreurs sont conserv\u233?es en m\u233?moire non volatile.\par
+}

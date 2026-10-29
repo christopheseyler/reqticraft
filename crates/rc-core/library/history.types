@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Types ReqtiCraft des journaux de versions (Git, Subversion, Perforce) et des bases de données (Access, ODBC, Oracle, SQLite). -->
+<Types coupling="History">
+<DocumentType name="Git Log" kind="xml" convertTool="GitLog" description="Journal Git d'une copie de travail : chaque identifiant d'exigence du message est une référence">
+<Property name="ForceProcessingAsDirectory" value="1" />
+<ElementType name="Commit" elementClass="Entity" analysisTree="&lt;logentry revision='$i'&gt;&lt;msg&gt;$t&lt;/msg&gt;&lt;/logentry&gt;" />
+<ElementType name="Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;msg&gt;$i[\s\S]+&lt;/msg&gt;" subExpression="([\w\-]*REQ[\w\-]*\d)" />
+<ElementType name="Author" elementClass="Attribute" analysisTree="&lt;logentry&gt;&lt;author&gt;$i&lt;/author&gt;&lt;/logentry&gt;" />
+<ElementType name="Date" elementClass="Attribute" analysisTree="&lt;logentry&gt;&lt;date&gt;$i&lt;/date&gt;&lt;/logentry&gt;" />
+</DocumentType>
+<DocumentType name="SVN Log" kind="xml" convertTool="SVNLogXml" description="Journal Subversion d'une copie de travail">
+<Property name="ForceProcessingAsDirectory" value="1" />
+<ElementType name="Revision" elementClass="Entity" analysisTree="&lt;logentry revision='$i'&gt;&lt;msg&gt;$t&lt;/msg&gt;&lt;/logentry&gt;" />
+<ElementType name="Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;msg&gt;$i[\s\S]+&lt;/msg&gt;" subExpression="([\w\-]*REQ[\w\-]*\d)" />
+<ElementType name="Author" elementClass="Attribute" analysisTree="&lt;logentry&gt;&lt;author&gt;$i&lt;/author&gt;&lt;/logentry&gt;" />
+</DocumentType>
+<DocumentType name="Perforce Log" kind="xml" convertTool="P4Log" description="Changements Perforce d'un chemin de dépôt">
+<ElementType name="Change" elementClass="Entity" analysisTree="&lt;logentry revision='$i'&gt;&lt;msg&gt;$t&lt;/msg&gt;&lt;/logentry&gt;" />
+<ElementType name="Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;msg&gt;$i[\s\S]+&lt;/msg&gt;" subExpression="([\w\-]*REQ[\w\-]*\d)" />
+<ElementType name="Author" elementClass="Attribute" analysisTree="&lt;logentry&gt;&lt;author&gt;$i&lt;/author&gt;&lt;/logentry&gt;" />
+</DocumentType>
+<DocumentType name="Database" kind="xml" convertTool="AccessXML" description="Table de base de données (Access, ODBC, Oracle, SQLite) : colonnes ID, Label, Text, Covers, Priority">
+<FileExtension value="mdb" />
+<FileExtension value="accdb" />
+<FileExtension value="sqlite" />
+<FileExtension value="sqlite3" />
+<FileExtension value="db" />
+<Variable name="table" label="Table" type="string" />
+<Variable name="query" label="Requête SQL" type="string" />
+<ElementType name="Table" elementClass="Section" analysisTree="&lt;table name='$i'&gt;&lt;/table&gt;" />
+<ElementType name="Requirement" elementClass="Requirement" analysisTree="&lt;record&gt;&lt;cell name='^(?i:id|requirement id)$'&gt;$i&lt;/cell&gt;&lt;cell name='^(?i:label|requirement label)$'&gt;$l$o&lt;/cell&gt;&lt;cell name='^(?i:text|requirement text)$'&gt;$t$o&lt;/cell&gt;&lt;/record&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;record&gt;&lt;cell name='^(?i:covers|covered requirements)$'&gt;$i&lt;/cell&gt;&lt;/record&gt;" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" analysisTree="&lt;record&gt;&lt;cell name='^(?i:priority)$'&gt;$i.+&lt;/cell&gt;&lt;/record&gt;">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+</DocumentType>
+</Types>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.omg.org/spec/UML/20161101" xmlns:sysml="http://www.omg.org/spec/SysML/20181001/SysML">
+<uml:Model xmi:id="model" name="Conception du thermostat">
+<packagedElement xmi:type="uml:Class" xmi:id="DES_REQ1" name="DES_REQ1"/>
+<packagedElement xmi:type="uml:Abstraction" xmi:id="s-DES_REQ1-THS_REQ1" client="DES_REQ1"><supplier href="specification.xmi#THS_REQ1"/></packagedElement>
+<packagedElement xmi:type="uml:Class" xmi:id="DES_REQ2" name="DES_REQ2"/>
+<packagedElement xmi:type="uml:Abstraction" xmi:id="s-DES_REQ2-THS_REQ2" client="DES_REQ2"><supplier href="specification.xmi#THS_REQ2"/></packagedElement>
+<packagedElement xmi:type="uml:Class" xmi:id="DES_REQ3" name="DES_REQ3"/>
+<packagedElement xmi:type="uml:Abstraction" xmi:id="s-DES_REQ3-THS_REQ3" client="DES_REQ3"><supplier href="specification.xmi#THS_REQ3"/></packagedElement>
+<packagedElement xmi:type="uml:Class" xmi:id="DES_REQ4" name="DES_REQ4"/>
+<packagedElement xmi:type="uml:Abstraction" xmi:id="s-DES_REQ4-THS_REQ4" client="DES_REQ4"><supplier href="specification.xmi#THS_REQ4"/></packagedElement>
+<packagedElement xmi:type="uml:Class" xmi:id="DES_REQ5" name="DES_REQ5"/>
+<packagedElement xmi:type="uml:Abstraction" xmi:id="s-DES_REQ5-THS_REQ6" client="DES_REQ5"><supplier href="specification.xmi#THS_REQ6"/></packagedElement>
+<packagedElement xmi:type="uml:Abstraction" xmi:id="s-DES_REQ5-THS_REQ99" client="DES_REQ5"><supplier href="specification.xmi#THS_REQ99"/></packagedElement>
+<packagedElement xmi:type="uml:Class" xmi:id="DES_REQ6" name="DES_REQ6"/>
+<packagedElement xmi:type="uml:Class" xmi:id="DES_REQ7" name="DES_REQ7"/>
+</uml:Model>
+<sysml:Block xmi:id="b-DES_REQ1" base_Class="DES_REQ1"/>
+<sysml:Satisfy xmi:id="a-DES_REQ1-THS_REQ1" base_Abstraction="s-DES_REQ1-THS_REQ1"/>
+<sysml:Block xmi:id="b-DES_REQ2" base_Class="DES_REQ2"/>
+<sysml:Satisfy xmi:id="a-DES_REQ2-THS_REQ2" base_Abstraction="s-DES_REQ2-THS_REQ2"/>
+<sysml:Block xmi:id="b-DES_REQ3" base_Class="DES_REQ3"/>
+<sysml:Satisfy xmi:id="a-DES_REQ3-THS_REQ3" base_Abstraction="s-DES_REQ3-THS_REQ3"/>
+<sysml:Block xmi:id="b-DES_REQ4" base_Class="DES_REQ4"/>
+<sysml:Satisfy xmi:id="a-DES_REQ4-THS_REQ4" base_Abstraction="s-DES_REQ4-THS_REQ4"/>
+<sysml:Block xmi:id="b-DES_REQ5" base_Class="DES_REQ5"/>
+<sysml:Satisfy xmi:id="a-DES_REQ5-THS_REQ6" base_Abstraction="s-DES_REQ5-THS_REQ6"/>
+<sysml:Satisfy xmi:id="a-DES_REQ5-THS_REQ99" base_Abstraction="s-DES_REQ5-THS_REQ99"/>
+<sysml:Block xmi:id="b-DES_REQ6" base_Class="DES_REQ6"/>
+<sysml:Block xmi:id="b-DES_REQ7" base_Class="DES_REQ7"/>
+</xmi:XMI>

@@ -1,0 +1,70 @@
+{
+ "page": 1,
+ "pageSize": 100,
+ "total": 7,
+ "items": [
+  {
+   "id": 1001,
+   "name": "DES_REQ1 : Échantillonnage du capteur",
+   "description": "Le capteur est lu par interruption toutes les 10 s. [Covers: THS_REQ1]",
+   "status": {
+    "id": 1,
+    "name": "New"
+   }
+  },
+  {
+   "id": 1002,
+   "name": "DES_REQ2 : Étalonnage",
+   "description": "Une table d'étalonnage en 16 points corrige la non-linéarité du capteur. [Covers: THS_REQ2]",
+   "status": {
+    "id": 1,
+    "name": "New"
+   }
+  },
+  {
+   "id": 1003,
+   "name": "DES_REQ3 : Bornes de consigne",
+   "description": "La consigne est saturée entre 7 °C et 30 °C. [Covers: THS_REQ3]",
+   "status": {
+    "id": 1,
+    "name": "New"
+   }
+  },
+  {
+   "id": 1004,
+   "name": "DES_REQ4 : Commande tout-ou-rien",
+   "description": "Le relais est commandé avec un seuil haut et un seuil bas. [Covers: THS_REQ4]",
+   "status": {
+    "id": 1,
+    "name": "New"
+   }
+  },
+  {
+   "id": 1005,
+   "name": "DES_REQ5 : API de consigne",
+   "description": "Une API REST expose la lecture et l'écriture de la consigne. [Covers: THS_REQ6, THS_REQ99]",
+   "status": {
+    "id": 1,
+    "name": "New"
+   }
+  },
+  {
+   "id": 1006,
+   "name": "DES_REQ6 : Chien de garde",
+   "description": "Un chien de garde redémarre le microcontrôleur après 2 s sans activité. ",
+   "status": {
+    "id": 1,
+    "name": "New"
+   }
+  },
+  {
+   "id": 1007,
+   "name": "DES_REQ7 : Journal d'erreurs",
+   "description": "Les 100 dernières erreurs sont conservées en mémoire non volatile. ",
+   "status": {
+    "id": 1,
+    "name": "New"
+   }
+  }
+ ]
+}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project xmlns="http://schemas.microsoft.com/project"><Title>Plan de conception</Title><Tasks>
+<Task><UID>0</UID><ID>0</ID><Name>Plan de conception</Name></Task>
+<Task><UID>1</UID><ID>1</ID><Name>DES_REQ1</Name><Notes>Le capteur est lu par interruption toutes les 10 s. Covers_THS_REQ1</Notes><PercentComplete>0</PercentComplete></Task>
+<Task><UID>2</UID><ID>2</ID><Name>DES_REQ2</Name><Notes>Une table d'étalonnage en 16 points corrige la non-linéarité du capteur. Covers_THS_REQ2</Notes><PercentComplete>0</PercentComplete></Task>
+<Task><UID>3</UID><ID>3</ID><Name>DES_REQ3</Name><Notes>La consigne est saturée entre 7 °C et 30 °C. Covers_THS_REQ3</Notes><PercentComplete>0</PercentComplete></Task>
+<Task><UID>4</UID><ID>4</ID><Name>DES_REQ4</Name><Notes>Le relais est commandé avec un seuil haut et un seuil bas. Covers_THS_REQ4</Notes><PercentComplete>0</PercentComplete></Task>
+<Task><UID>5</UID><ID>5</ID><Name>DES_REQ5</Name><Notes>Une API REST expose la lecture et l'écriture de la consigne. Covers_THS_REQ6 Covers_THS_REQ99</Notes><PercentComplete>0</PercentComplete></Task>
+<Task><UID>6</UID><ID>6</ID><Name>DES_REQ6</Name><Notes>Un chien de garde redémarre le microcontrôleur après 2 s sans activité.</Notes><PercentComplete>0</PercentComplete></Task>
+<Task><UID>7</UID><ID>7</ID><Name>DES_REQ7</Name><Notes>Les 100 dernières erreurs sont conservées en mémoire non volatile.</Notes><PercentComplete>0</PercentComplete></Task>
+</Tasks></Project>

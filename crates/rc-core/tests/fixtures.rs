@@ -130,6 +130,14 @@ fn pdf_projects() {
     check_full_project("pdf/thermostat-ini.rqtf");
 }
 
+/// Formats P1/P2 : mêmes résultats que les formats P0.
+#[test]
+fn p1_p2_document_formats() {
+    for project in expected()["full"].as_array().unwrap() {
+        check_full_project(project.as_str().unwrap());
+    }
+}
+
 #[test]
 fn partial_projects() {
     let exp = expected();

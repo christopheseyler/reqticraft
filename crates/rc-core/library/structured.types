@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Types ReqtiCraft pour ReqIF, Visio, MS Project, SysML (XMI), médias et propriétés de fichiers. -->
+<Types coupling="Structured">
+<DocumentType name="ReqIF" kind="xml" convertTool="ReqIF" description="ReqIF / ReqIFz : objets titres et exigences, relations">
+<FileExtension value="reqif" />
+<FileExtension value="reqifz" />
+<ElementType name="Specification" elementClass="Section" analysisTree="&lt;Specification name='$i'&gt;&lt;/Specification&gt;" />
+<ElementType name="Heading" elementClass="Section" analysisTree="&lt;Object kind='^heading$' ident='$i' label='$l'&gt;&lt;/Object&gt;" />
+<ElementType name="Requirement" elementClass="Requirement" analysisTree="&lt;Object kind='^requirement$' ident='$i' label='$l' text='$t'&gt;&lt;/Object&gt;" />
+<ElementType name="Link" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;Link target='$i'&gt;&lt;/Link&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;Object kind='^requirement$' text='$i\[Covers[ \t]*:[ \t]*([^\]]*)\]'&gt;&lt;/Object&gt;" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" analysisTree="&lt;Attribute name='^Priority$' value='$i'&gt;&lt;/Attribute&gt;">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+<ElementType name="Status" elementClass="Attribute" analysisTree="&lt;Attribute name='^(ReqIF\.)?Status$' value='$i'&gt;&lt;/Attribute&gt;" />
+</DocumentType>
+<DocumentType name="Visio" kind="xml" convertTool="VisioXml" description="Visio (.vsdx) : pages, formes, propriétés « Requirements Traceability »">
+<FileExtension value="vsdx" />
+<ElementType name="Page" elementClass="Section" analysisTree="&lt;Page name='$i'&gt;&lt;/Page&gt;" />
+<ElementType name="Shape" elementClass="Entity" analysisTree="&lt;Shape name='$i' text='$l'&gt;&lt;/Shape&gt;" />
+<ElementType name="Requirement" elementClass="Requirement" analysisTree="&lt;Property name='^Requirements Definition$' value='$i'&gt;&lt;/Property&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;Property name='^Requirements Traceability$' value='$i(?:Covers)?[ \t]*:?[ \t]*\(?([^)]*)\)?'&gt;&lt;/Property&gt;" subExpression="([^,;\s]+)" />
+</DocumentType>
+<DocumentType name="MS Project" kind="xml" convertTool="MSProject" description="MS Project enregistré en XML : tâches, ressources, « Covers_REQ1 » dans les notes">
+<FileExtension value="xml" />
+<ElementType name="Task" elementClass="Entity" analysisTree="&lt;Task name='$i' notes='$t'&gt;&lt;/Task&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" analysisTree="&lt;Task notes='$i([\s\S]*Covers_[\s\S]*)'&gt;&lt;/Task&gt;" subExpression="Covers_([\w\-]+)" printExpression="Covers_$i" />
+<ElementType name="Resource" elementClass="Attribute" analysisTree="&lt;Resource name='$i'&gt;&lt;/Resource&gt;" />
+<ElementType name="Complete" elementClass="Attribute" analysisTree="&lt;Task percentcomplete='$i.+'&gt;&lt;/Task&gt;" />
+</DocumentType>
+<DocumentType name="SysML" kind="xml" convertTool="XMI" description="Modèle UML/SysML en XMI (.xmi, .uml, .mdzip) : exigences, blocs, Satisfy/Verify/DeriveReqt">
+<FileExtension value="xmi" />
+<FileExtension value="uml" />
+<FileExtension value="mdzip" />
+<ElementType name="Package" elementClass="Section" analysisTree="&lt;Element type='^(Package|Model)$' name='$i'&gt;&lt;/Element&gt;" />
+<ElementType name="Requirement" elementClass="Requirement" analysisTree="&lt;Element stereotype='Requirement$' ident='$i' name='$l' text='$t'&gt;&lt;/Element&gt;" />
+<ElementType name="Block" elementClass="Entity" analysisTree="&lt;Element stereotype='$!Requirement$' type='^(Class|Component|Activity|UseCase|Interface)$' ident='$i'&gt;&lt;/Element&gt;" />
+<ElementType name="Trace" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;Relation kind='^(Satisfy|Verify|DeriveReqt|Refine|Trace|Realization|Abstraction)$' target='$i'&gt;&lt;/Relation&gt;" />
+</DocumentType>
+<DocumentType name="Media" kind="xml" convertTool="MediaInfo" description="Images et vidéos : « REQ12 » et « [Covers: …] » dans le commentaire">
+<FileExtension value="png" />
+<FileExtension value="jpg" />
+<FileExtension value="jpeg" />
+<FileExtension value="gif" />
+<FileExtension value="bmp" />
+<FileExtension value="mp4" />
+<FileExtension value="mov" />
+<FileExtension value="m4v" />
+<FileExtension value="avi" />
+<FileExtension value="ogg" />
+<ElementType name="Media" elementClass="Entity" analysisTree="&lt;media ref='$i'&gt;&lt;/media&gt;" />
+<ElementType name="Requirement" elementClass="Requirement" analysisTree="&lt;Comment&gt;$i^([\w\-]*REQ[\w\-]*\d)&lt;/Comment&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;Comment&gt;$i\[Covers[ \t]*:[ \t]*([^\]]*)\]&lt;/Comment&gt;" subExpression="([^,;\s]+)" />
+<ElementType name="Format" elementClass="Attribute" analysisTree="&lt;track type='^General$'&gt;&lt;Format&gt;$i&lt;/Format&gt;&lt;/track&gt;" />
+<ElementType name="Duration" elementClass="Attribute" analysisTree="&lt;track type='^General$'&gt;&lt;Duration&gt;$i&lt;/Duration&gt;&lt;/track&gt;" />
+</DocumentType>
+<DocumentType name="File Properties" kind="xml" convertTool="FileProperties" description="Propriétés de fichiers : propriété personnalisée « Covers »">
+<ElementType name="File" elementClass="Entity" analysisTree="&lt;FolderItem name='$i'&gt;&lt;/FolderItem&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;Property name='^Custom\.Covers$' value='$i'&gt;&lt;/Property&gt;" subExpression="([^,;\s]+)" />
+<ElementType name="Title" elementClass="Attribute" analysisTree="&lt;Property name='^Title$' value='$i.+'&gt;&lt;/Property&gt;" />
+<ElementType name="Authors" elementClass="Attribute" analysisTree="&lt;Property name='^Authors$' value='$i.+'&gt;&lt;/Property&gt;" />
+</DocumentType>
+</Types>

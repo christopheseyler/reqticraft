@@ -406,6 +406,11 @@ types d'analyse par défaut.
 - Magic Cyber Systems Engineer / Cameo / Teamwork Cloud (SysML), IDE, HTTP, FileProperties, MediaInfo ;
 - Perforce, CVS, ClearCase, Synergy, PVCS, Documentum, ProjectWise, DesignSync, SolidWorks, Change Management.
 
+> **État (2026-10-29)** : les connecteurs P1 et P2 sont réalisés, sauf exceptions. Restent les formats
+> binaires `.doc`, `.ppt`, `.vsd`, `.mpp` et `.fm`, et les outils sans format ni API ouverts : DOORS
+> classique en direct, RequisitePro, PTC Integrity, Teamwork Cloud, SolidWorks. Ils passent par un
+> plugin ou une commande externe. Détail : `interop-formats.md` §12.
+
 **P3 — écosystème Dassault et outils de niche** (forte dépendance à des API propriétaires) :
 
 - CATIA V5, CATIA Functional & Logical Design, CATIA Product Structure Design, ENOVIA (Requirements,

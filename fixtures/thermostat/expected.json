@@ -50,6 +50,94 @@
         5,
         6
       ]
+    },
+    "sources/jira.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    },
+    "sources/redmine.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    },
+    "sources/bugzilla.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    },
+    "sources/codebeamer.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    },
+    "sources/jama.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    },
+    "sources/polarion.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    },
+    "sources/oslc.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    },
+    "sources/visio.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    },
+    "sources/msproject.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    },
+    "sources/sysml.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    },
+    "sources/media.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    },
+    "sources/proprietes.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
+    },
+    "sources/zip.rqtf": {
+      "Spécification": [
+        5,
+        6
+      ]
     }
-  }
+  },
+  "full": [
+    "markdown/thermostat.rqtf",
+    "html/thermostat.rqtf",
+    "asciidoc/thermostat.rqtf",
+    "rtf/thermostat.rqtf",
+    "odt/thermostat.rqtf",
+    "mif/thermostat.rqtf",
+    "pptx/thermostat.rqtf",
+    "reqif/thermostat.rqtf"
+  ]
 }

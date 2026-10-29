@@ -1,0 +1,62 @@
+= Conception du thermostat
+
+Document de test ReqtiCraft, créé pour le corpus maison.
+
+== Acquisition
+
+DES_REQ1 : Échantillonnage du capteur
+
+____
+Le capteur est lu par interruption toutes les 10 s.
+____
+
+[Covers: THS_REQ1]
+
+DES_REQ2 : Étalonnage
+
+____
+Une table d'étalonnage en 16 points corrige la non-linéarité du capteur.
+____
+
+[Covers: THS_REQ2]
+
+== Régulateur
+
+DES_REQ3 : Bornes de consigne
+
+____
+La consigne est saturée entre 7 °C et 30 °C.
+____
+
+[Covers: THS_REQ3]
+
+DES_REQ4 : Commande tout-ou-rien
+
+____
+Le relais est commandé avec un seuil haut et un seuil bas.
+____
+
+[Covers: THS_REQ4]
+
+DES_REQ5 : API de consigne
+
+____
+Une API REST expose la lecture et l'écriture de la consigne.
+____
+
+[Covers: THS_REQ6, THS_REQ99]
+
+== Exigences dérivées
+
+DES_REQ6 : Chien de garde
+
+____
+Un chien de garde redémarre le microcontrôleur après 2 s sans activité.
+____
+
+DES_REQ7 : Journal d'erreurs
+
+____
+Les 100 dernières erreurs sont conservées en mémoire non volatile.
+____
+

@@ -1,0 +1,56 @@
+= Plan de tests du thermostat
+
+Document de test ReqtiCraft, créé pour le corpus maison.
+
+== Tests unitaires
+
+TST_REQ1 : Période d'échantillonnage
+
+____
+Vérifier 6 lectures par minute.
+____
+
+[Covers: DES_REQ1]
+
+TST_REQ2 : Table d'étalonnage
+
+____
+Comparer 16 points à une sonde de référence.
+____
+
+[Covers: DES_REQ2]
+
+TST_REQ3 : Saturation
+
+____
+Envoyer 5 °C et 35 °C, vérifier 7 °C et 30 °C.
+____
+
+[Covers: DES_REQ3]
+
+TST_REQ4 : Seuils du relais
+
+____
+Balayer la température autour de la consigne.
+____
+
+[Covers: DES_REQ4]
+
+== Tests d'intégration
+
+TST_REQ5 : API REST
+
+____
+Lire puis écrire la consigne par l'API.
+____
+
+[Covers: DES_REQ5]
+
+TST_REQ6 : Chien de garde
+
+____
+Bloquer la boucle principale, vérifier le redémarrage.
+____
+
+[Covers: DES_REQ6]
+

@@ -1,0 +1,19 @@
+[package]
+name = "rc-connect"
+description = "Connecteurs : types d'accès (ZIP, HTTP, Git…) et outils tiers (ALM, gestion de versions, bases de données)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+csv = "1.4.0"
+rc-convert.workspace = true
+rc-interop.workspace = true
+roxmltree = "0.21.2"
+serde_json = { workspace = true, features = ["preserve_order"] }
+thiserror.workspace = true
+zip = { version = "7.3.0", default-features = false, features = ["deflate"] }
+
+[lints]
+workspace = true

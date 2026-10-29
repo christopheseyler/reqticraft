@@ -4,7 +4,7 @@
 <Types coupling="Text">
 <DocumentType name="Text" convertTool="text" editTool="TextEditor" description="Fichier texte : titres numérotés, exigences XXX_REQn, références [Covers: …]">
 <FileExtension value="txt" />
-<FileExtension value="md" />
+
 <ElementType name="Heading 1" elementClass="Section" regularExpression="^(\d+)\.[ \t]+(.+)$" />
 <ElementType name="Heading 2" elementClass="Section" regularExpression="^(\d+\.\d+)\.?[ \t]+(.+)$">
 <ParentType name="Heading 1" />

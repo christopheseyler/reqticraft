@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+<Document name="Spécification" positionX="800" positionY="400" type="Writer" path="specification.odt">
+</Document>
+<Document name="Conception" positionX="1500" positionY="1000" type="Writer" path="design.odt">
+</Document>
+<Document name="Tests" positionX="2200" positionY="1600" type="Writer" path="tests.odt">
+</Document>
+<Cover outputDocument="Spécification" positionX="0" positionY="0">
+<InputDocument name="Conception" />
+</Cover>
+<Cover outputDocument="Conception" positionX="0" positionY="0">
+<InputDocument name="Tests" />
+</Cover>
+</Project>

@@ -1,0 +1,25 @@
+{\rtf1\ansi\ansicpg1252\deff0{\fonttbl{\f0 Arial;}}
+{\stylesheet{\s0 Normal;}{\s1\sbasedon0 heading 1;}{\s2\sbasedon0 heading 2;}{\s3\sbasedon0 Requirement_ID;}{\s4\sbasedon0 Requirement_Text;}}
+\pard\s1 1. Plan de tests du thermostat\par
+\pard\s0 Document de test ReqtiCraft, cr\u233?\u233? pour le corpus maison.\par
+\pard\s2 2. Tests unitaires\par
+\pard\s3 TST_REQ1 : P\u233?riode d'\u233?chantillonnage\par
+\pard\s4 V\u233?rifier 6 lectures par minute.\par
+\pard\s0 [Covers: DES_REQ1]\par
+\pard\s3 TST_REQ2 : Table d'\u233?talonnage\par
+\pard\s4 Comparer 16 points \u224? une sonde de r\u233?f\u233?rence.\par
+\pard\s0 [Covers: DES_REQ2]\par
+\pard\s3 TST_REQ3 : Saturation\par
+\pard\s4 Envoyer 5 \u176?C et 35 \u176?C, v\u233?rifier 7 \u176?C et 30 \u176?C.\par
+\pard\s0 [Covers: DES_REQ3]\par
+\pard\s3 TST_REQ4 : Seuils du relais\par
+\pard\s4 Balayer la temp\u233?rature autour de la consigne.\par
+\pard\s0 [Covers: DES_REQ4]\par
+\pard\s2 3. Tests d'int\u233?gration\par
+\pard\s3 TST_REQ5 : API REST\par
+\pard\s4 Lire puis \u233?crire la consigne par l'API.\par
+\pard\s0 [Covers: DES_REQ5]\par
+\pard\s3 TST_REQ6 : Chien de garde\par
+\pard\s4 Bloquer la boucle principale, v\u233?rifier le red\u233?marrage.\par
+\pard\s0 [Covers: DES_REQ6]\par
+}

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Types ReqtiCraft des traitements de texte autres que Word (même convention : titres en style Heading n, exigences en style Requirement_ID « REQ12 : libellé », texte en style Requirement_Text, références « [Covers: …] »). -->
+<Types coupling="Documents">
+<DocumentType name="Writer" convertTool="OpenOfficeWriter" description="OpenDocument Texte (OpenOffice, LibreOffice Writer)">
+<FileExtension value="odt" />
+<FileExtension value="odm" />
+<Variable name="withCharacterStyles" label="Styles de caractères" type="boolean" />
+<ElementType name="Heading" elementClass="Section" regularExpression="^[Hh]eading ?(\d)\t(?:(\d+(?:\.\d+)*)\.?[ \t]+)?(.+)$" index1="6" index2="1" index3="2" />
+<ElementType name="Macro-requirement" elementClass="MacroRequirement" regularExpression="\[MacroReq_([^\]]+)\]?" endExpression="\[End_of_MacroReq\]" isNested="true" />
+<ElementType name="Requirement" elementClass="Requirement" regularExpression="^Requirement_ID\t[ \t]*([^\s:]+)(?:[ \t]*:[ \t]*(.*\S))?[ \t]*$" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" regularExpression="\[Covers[ \t]*:[ \t]*([^\]]*)\]" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" regularExpression="^[^\t\n]*\t[ \t]*Priority[ \t]*:[ \t]*(\S+)" printExpression="Priority : $i">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+<TerminalType name="Text" elementClass="Text" regularExpression="^Requirement_Text\t(.+)$" />
+</DocumentType>
+<DocumentType name="RTF" convertTool="RTFwithStyles" description="RTF : mêmes styles que Word">
+<FileExtension value="rtf" />
+<Variable name="withCharacterStyles" label="Styles de caractères" type="boolean" />
+<ElementType name="Heading" elementClass="Section" regularExpression="^[Hh]eading ?(\d)\t(?:(\d+(?:\.\d+)*)\.?[ \t]+)?(.+)$" index1="6" index2="1" index3="2" />
+<ElementType name="Macro-requirement" elementClass="MacroRequirement" regularExpression="\[MacroReq_([^\]]+)\]?" endExpression="\[End_of_MacroReq\]" isNested="true" />
+<ElementType name="Requirement" elementClass="Requirement" regularExpression="^Requirement_ID\t[ \t]*([^\s:]+)(?:[ \t]*:[ \t]*(.*\S))?[ \t]*$" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" regularExpression="\[Covers[ \t]*:[ \t]*([^\]]*)\]" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" regularExpression="^[^\t\n]*\t[ \t]*Priority[ \t]*:[ \t]*(\S+)" printExpression="Priority : $i">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+<TerminalType name="Text" elementClass="Text" regularExpression="^Requirement_Text\t(.+)$" />
+</DocumentType>
+<DocumentType name="FrameMaker MIF" convertTool="FramemakerWithStyles" description="FrameMaker enregistré en MIF : balises Heading1…, Requirement_ID, Requirement_Text">
+<FileExtension value="mif" />
+<ElementType name="Heading" elementClass="Section" regularExpression="^[Hh]eading ?(\d)\t(?:(\d+(?:\.\d+)*)\.?[ \t]+)?(.+)$" index1="6" index2="1" index3="2" />
+<ElementType name="Macro-requirement" elementClass="MacroRequirement" regularExpression="\[MacroReq_([^\]]+)\]?" endExpression="\[End_of_MacroReq\]" isNested="true" />
+<ElementType name="Requirement" elementClass="Requirement" regularExpression="^Requirement_ID\t[ \t]*([^\s:]+)(?:[ \t]*:[ \t]*(.*\S))?[ \t]*$" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" regularExpression="\[Covers[ \t]*:[ \t]*([^\]]*)\]" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" regularExpression="^[^\t\n]*\t[ \t]*Priority[ \t]*:[ \t]*(\S+)" printExpression="Priority : $i">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+<TerminalType name="Text" elementClass="Text" regularExpression="^Requirement_Text\t(.+)$" />
+</DocumentType>
+</Types>

@@ -36,5 +36,13 @@ Projets complémentaires :
 | `json/thermostat.rqtf` | spécification en JSON couverte par la conception | spécification 5/6 |
 | `composite/thermostat.rqtf` | sous-projet « Fournisseur » dont la spécification est remplacée par celle du projet | spécification 5/6 |
 
+Formats P1/P2 au complet (`markdown/`, `html/`, `asciidoc/`, `rtf/`, `odt/`, `mif/`, `pptx/`,
+`reqif/`) : même scénario, mêmes résultats attendus (liste `full` de `expected.json`).
+
+`sources/` : la conception exprimée dans d'autres outils couvre la spécification texte (attendu :
+5/6 et `THS_REQ99` inconnue). Réponses d'API enregistrées pour Jira, Redmine, Bugzilla, codebeamer,
+Jama, Polarion et OSLC ; Visio, MS Project XML, SysML (XMI), images PNG commentées, propriétés
+personnalisées de fichiers Office ; conception Word livrée dans une archive ZIP (type d'accès).
+
 Le PDF n'utilise que du texte positionné et des signets : aucun style de paragraphe. Les lignes y
 sont fusionnées par les extracteurs naïfs, ce qui teste la reconstitution des paragraphes.

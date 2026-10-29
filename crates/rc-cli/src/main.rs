@@ -140,16 +140,9 @@ fn run(cli: Cli) -> Result<ExitCode> {
         } => {
             let types = library(&cli.config);
             let doc_type = pick_type(&types, type_name.as_deref(), &file)?;
-            let decl = rc_core::rc_model::DocumentDecl {
-                params,
-                ..Default::default()
-            };
-            let out = rc_core::convert_document(
-                doc_type,
-                &file,
-                &rc_core::convert_options(doc_type, &decl),
-            )
-            .map_err(anyhow::Error::msg)?;
+            let entry = entry_for(&file, doc_type, params);
+            let out = rc_core::intermediate(&entry, doc_type)
+                .map_err(|(rule, text)| anyhow::anyhow!("{rule} : {text}"))?;
             print!("{}", out.as_str());
             Ok(ExitCode::SUCCESS)
         }
@@ -176,31 +169,41 @@ fn run(cli: Cli) -> Result<ExitCode> {
         } => {
             let types = library(&cli.config);
             let doc_type = pick_type(&types, type_name.as_deref(), &file)?;
-            let entry = rc_core::DocumentEntry {
-                name: file
-                    .file_name()
-                    .map(|n| n.to_string_lossy().into_owned())
-                    .unwrap_or_default(),
-                decl: rc_core::rc_model::DocumentDecl {
-                    name: String::new(),
-                    doc_type: doc_type.name.clone(),
-                    path: file.clone(),
-                    params,
-                    ..Default::default()
-                },
-                base_dir: PathBuf::new(),
-                types: {
-                    let mut lib = rc_core::rc_interop::TypeLibrary::default();
-                    lib.extend([doc_type.clone()]);
-                    lib
-                },
-            };
+            let entry = entry_for(&file, doc_type, params);
             let doc = rc_core::capture_document(&entry);
             print!("{}", output::element_tree(&doc));
             Ok(ExitCode::SUCCESS)
         }
         Command::Report { .. } => bail!("la commande `report` n'est pas encore implémentée"),
         Command::Snapshot { .. } => bail!("la commande `snapshot` n'est pas encore implémentée"),
+    }
+}
+
+/// Document isolé (commandes `convert` et `types test`) : chemin, URL ou
+/// requête relatifs au répertoire courant.
+fn entry_for(
+    file: &Path,
+    doc_type: &DocumentType,
+    params: Vec<(String, String)>,
+) -> rc_core::DocumentEntry {
+    rc_core::DocumentEntry {
+        name: file
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "document".into()),
+        decl: rc_core::rc_model::DocumentDecl {
+            name: String::new(),
+            doc_type: doc_type.name.clone(),
+            path: file.to_owned(),
+            params,
+            ..Default::default()
+        },
+        base_dir: PathBuf::from("."),
+        types: {
+            let mut lib = rc_core::rc_interop::TypeLibrary::default();
+            lib.extend([doc_type.clone()]);
+            lib
+        },
     }
 }
 

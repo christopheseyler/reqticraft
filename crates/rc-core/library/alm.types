@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Types ReqtiCraft des outils ALM (Jira, Redmine, Bugzilla, codebeamer, Jama, Polarion, DOORS Next, OSLC). Le document désigne une requête (paramètre profile : connexion) ou un fichier de réponse d'API ; références « [Covers: …] » dans la description et liens natifs. -->
+<Types coupling="ALM">
+<DocumentType name="Jira" kind="xml" convertTool="JIRA" description="Jira : requête JQL (forme &lt;issues key&gt;&lt;fields summary description&gt;)">
+<ElementType name="Issue" elementClass="Requirement" analysisTree="&lt;issues key='$i'&gt;&lt;fields summary='$l' description='$t$o'&gt;&lt;/fields&gt;&lt;/issues&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;fields description='$i[\s\S]*?\[Covers[ \t]*:[ \t]*([^\]]*)\]'&gt;&lt;/fields&gt;" subExpression="([^,;\s]+)" />
+<ElementType name="Issue Link" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;issuelinks&gt;&lt;outwardIssue key='$i'&gt;&lt;/outwardIssue&gt;&lt;/issuelinks&gt;" />
+<ElementType name="Status" elementClass="Attribute" analysisTree="&lt;fields&gt;&lt;status name='$i'&gt;&lt;/status&gt;&lt;/fields&gt;" />
+<ElementType name="Priority" elementClass="Attribute" analysisTree="&lt;fields&gt;&lt;priority name='$i'&gt;&lt;/priority&gt;&lt;/fields&gt;" />
+<ElementType name="Type" elementClass="Attribute" analysisTree="&lt;fields&gt;&lt;issuetype name='$i'&gt;&lt;/issuetype&gt;&lt;/fields&gt;" />
+</DocumentType>
+<DocumentType name="Redmine" kind="xml" convertTool="Redmine" description="Redmine : paramètres de liste des demandes">
+<ElementType name="Issue" elementClass="Requirement" analysisTree="&lt;issue&gt;&lt;id&gt;$i&lt;/id&gt;&lt;subject&gt;$l&lt;/subject&gt;&lt;/issue&gt;" />
+<ElementType name="Description" elementClass="Text" analysisTree="&lt;issue&gt;&lt;description&gt;$t&lt;/description&gt;&lt;/issue&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;issue&gt;&lt;description&gt;$i[\s\S]*?\[Covers[ \t]*:[ \t]*([^\]]*)\]&lt;/description&gt;&lt;/issue&gt;" subExpression="([^,;\s]+)" />
+<ElementType name="Status" elementClass="Attribute" analysisTree="&lt;issue&gt;&lt;status name='$i'&gt;&lt;/status&gt;&lt;/issue&gt;" />
+<ElementType name="Priority" elementClass="Attribute" analysisTree="&lt;issue&gt;&lt;priority name='$i'&gt;&lt;/priority&gt;&lt;/issue&gt;" />
+</DocumentType>
+<DocumentType name="Bugzilla" kind="xml" convertTool="Bugzilla" description="Bugzilla : paramètres de recherche">
+<ElementType name="Bug" elementClass="Requirement" analysisTree="&lt;Bug&gt;&lt;id&gt;$i&lt;/id&gt;&lt;summary&gt;$l&lt;/summary&gt;&lt;/Bug&gt;" />
+<ElementType name="Description" elementClass="Text" analysisTree="&lt;Bug&gt;&lt;comment&gt;$t&lt;/comment&gt;&lt;/Bug&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;Bug&gt;&lt;comment&gt;$i[\s\S]*?\[Covers[ \t]*:[ \t]*([^\]]*)\]&lt;/comment&gt;&lt;/Bug&gt;" subExpression="([^,;\s]+)" />
+<ElementType name="Whiteboard" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;Bug&gt;&lt;whiteboard&gt;$i&lt;/whiteboard&gt;&lt;/Bug&gt;" subExpression="([^,;\s]+)" />
+<ElementType name="Status" elementClass="Attribute" analysisTree="&lt;Bug&gt;&lt;status&gt;$i&lt;/status&gt;&lt;/Bug&gt;" />
+<ElementType name="Priority" elementClass="Attribute" analysisTree="&lt;Bug&gt;&lt;priority&gt;$i&lt;/priority&gt;&lt;/Bug&gt;" />
+</DocumentType>
+<DocumentType name="codebeamer" kind="xml" convertTool="CodeBeamer" description="codebeamer : requête cbQL">
+<ElementType name="Item" elementClass="Requirement" analysisTree="&lt;items id='$i' name='$l' description='$t$o'&gt;&lt;/items&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;items description='$i[\s\S]*?\[Covers[ \t]*:[ \t]*([^\]]*)\]'&gt;&lt;/items&gt;" subExpression="([^,;\s]+)" />
+<ElementType name="Status" elementClass="Attribute" analysisTree="&lt;items&gt;&lt;status name='$i'&gt;&lt;/status&gt;&lt;/items&gt;" />
+<ElementType name="Priority" elementClass="Attribute" analysisTree="&lt;items&gt;&lt;priority name='$i'&gt;&lt;/priority&gt;&lt;/items&gt;" />
+</DocumentType>
+<DocumentType name="Jama" kind="xml" convertTool="JamaRest" description="Jama : project=&lt;id&gt; ou filter=&lt;id&gt;">
+<ElementType name="Item" elementClass="Requirement" analysisTree="&lt;Item name='$i' title='$l' description='$t'&gt;&lt;/Item&gt;" />
+<ElementType name="Upstream" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;Upstreamrelationship from='$i'&gt;&lt;/Upstreamrelationship&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;Item description='$i[\s\S]*?\[Covers[ \t]*:[ \t]*([^\]]*)\]'&gt;&lt;/Item&gt;" subExpression="([^,;\s]+)" />
+<ElementType name="Status" elementClass="Attribute" analysisTree="&lt;Field label='^status$' value='$i'&gt;&lt;/Field&gt;" />
+</DocumentType>
+<DocumentType name="Polarion" kind="xml" convertTool="Polarion" description="Polarion : requête Lucene, paramètre project">
+<ElementType name="Heading" elementClass="Section" analysisTree="&lt;WorkItem type='^heading$' id='$i' title='$l'&gt;&lt;/WorkItem&gt;" />
+<ElementType name="Work Item" elementClass="Requirement" analysisTree="&lt;WorkItem type='$!^heading$' id='$i' title='$l' description='$t'&gt;&lt;/WorkItem&gt;" />
+<ElementType name="Linked Work Item" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;WorkItem linkedWorkItems='$i(.*=.*)'&gt;&lt;/WorkItem&gt;" subExpression="(?:verifies|implements|refines|satisfies|relates_to)=\{[^}]*\}([^,]+)" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;WorkItem description='$i[\s\S]*?\[Covers[ \t]*:[ \t]*([^\]]*)\]'&gt;&lt;/WorkItem&gt;" subExpression="([^,;\s]+)" />
+<ElementType name="Status" elementClass="Attribute" analysisTree="&lt;WorkItem status='$i.+'&gt;&lt;/WorkItem&gt;" />
+</DocumentType>
+<DocumentType name="DOORS Next" kind="xml" convertTool="DoorsNG" description="DOORS Next : URL de l'API de publication">
+<ElementType name="Artifact" elementClass="Requirement" analysisTree="&lt;ds:artifact&gt;&lt;rrm:identifier&gt;$i&lt;/rrm:identifier&gt;&lt;rrm:title&gt;$l&lt;/rrm:title&gt;&lt;/ds:artifact&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;ds:artifact&gt;&lt;rrm:title&gt;$i[\s\S]*?\[Covers[ \t]*:[ \t]*([^\]]*)\]&lt;/rrm:title&gt;&lt;/ds:artifact&gt;" subExpression="([^,;\s]+)" />
+</DocumentType>
+<DocumentType name="Change Management" kind="xml" convertTool="CCM" description="OSLC Change Management : URL d'une requête">
+<ElementType name="Change Request" elementClass="Requirement" analysisTree="&lt;WorkItem shortId='$i' title='$l' description='$t'&gt;&lt;/WorkItem&gt;" />
+<ElementType name="Linked Requirement" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;Link target='$i(?:.*[/#])?([^/#]+)$'&gt;&lt;/Link&gt;" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" analysisTree="&lt;WorkItem description='$i[\s\S]*?\[Covers[ \t]*:[ \t]*([^\]]*)\]'&gt;&lt;/WorkItem&gt;" subExpression="([^,;\s]+)" />
+<ElementType name="Status" elementClass="Attribute" analysisTree="&lt;WorkItem status='$i.+'&gt;&lt;/WorkItem&gt;" />
+</DocumentType>
+</Types>

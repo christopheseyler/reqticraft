@@ -3,10 +3,24 @@
 //!
 //! Formats produits : `docs/interop-formats.md` §5.
 
+mod archive;
 mod docx;
+mod fileprops;
+mod html;
 mod json;
+pub mod lines;
+mod markdown;
+mod media;
+mod mif;
+mod msproject;
+mod odf;
 mod pdf;
+mod pptx;
+mod reqif;
+mod rtf;
 mod sheet;
+mod visio;
+mod xmi;
 
 use std::path::{Path, PathBuf};
 
@@ -42,19 +56,64 @@ pub enum ConverterId {
     Json,
     /// Fichier XML tel quel.
     Xml,
+    /// HTML : une ligne `H1`/`P`/`LI`… par bloc.
+    Html,
+    /// Markdown : mêmes styles que le HTML rendu.
+    Markdown,
+    /// RTF : lignes stylées comme Word.
+    Rtf,
+    /// OpenDocument Texte (Writer) : lignes stylées comme Word.
+    Odt,
+    /// PowerPoint `.pptx` : `SLIDE`, `SHAPES`, `NOTES`, `COMMENTS`.
+    Pptx,
+    /// FrameMaker MIF : lignes stylées.
+    Mif,
+    /// ReqIF / ReqIFz → XML résolu (objets, hiérarchie, relations).
+    Reqif,
+    /// Visio `.vsdx` → `<Page><Shape><Property>`.
+    Visio,
+    /// MS Project XML (MSPDI) → `<Task>`.
+    MsProject,
+    /// XMI UML/SysML (et `.mdzip`) → XMI suivi d'un résumé.
+    Xmi,
+    /// Médias → XML de la forme MediaInfo.
+    Media,
+    /// Propriétés de fichiers → `<FolderItem><Property>`.
+    FileProperties,
 }
 
 impl ConverterId {
     /// Convertisseur correspondant à un `convertTool` des types d'analyse.
     pub fn for_tool(tool: &str) -> Option<ConverterId> {
         Some(match tool.to_ascii_lowercase().as_str() {
-            "text" | "basicconnector" | "code" | "largecode" | "texteditor" => ConverterId::Text,
-            "wordwithstyles" | "word" | "docx" => ConverterId::Docx,
-            "excelwithcolnumbers" | "excel" | "csv" | "spreadsheet" => ConverterId::SheetText,
-            "excelxml" | "spreadsheetxml" => ConverterId::SheetXml,
+            "" | "text" | "basicconnector" | "code" | "largecode" | "texteditor" | "asciidoc" => {
+                ConverterId::Text
+            }
+            "wordwithstyles" | "word" | "docx" | "googledocwithstyles" => ConverterId::Docx,
+            "excelwithcolnumbers"
+            | "excel"
+            | "csv"
+            | "spreadsheet"
+            | "openoffice_calc"
+            | "googlesheetwithcolnumbers" => ConverterId::SheetText,
+            "excelxml" | "spreadsheetxml" | "openoffice_calcxml" | "googlesheetxml" => {
+                ConverterId::SheetXml
+            }
             "padafix" | "pdf" => ConverterId::Pdf,
             "json" => ConverterId::Json,
             "xml" => ConverterId::Xml,
+            "htmlwithstyles" | "html" => ConverterId::Html,
+            "markdown" | "md" => ConverterId::Markdown,
+            "rtfwithstyles" | "rtf" => ConverterId::Rtf,
+            "openofficewriter" | "libreofficewriter" | "odt" | "writer" => ConverterId::Odt,
+            "powerpoint" | "pptx" | "googleslide" => ConverterId::Pptx,
+            "framemakerwithstyles" | "mif" | "framemaker" => ConverterId::Mif,
+            "reqif" | "reqifz" => ConverterId::Reqif,
+            "visioxml" | "visio" | "vsdx" => ConverterId::Visio,
+            "msproject" | "msprojectxml" | "mspdi" => ConverterId::MsProject,
+            "magicdraw" | "xmi" | "sysml" | "uml" => ConverterId::Xmi,
+            "mediainfo" | "media" => ConverterId::Media,
+            "fileproperties" | "padafixproperties" => ConverterId::FileProperties,
             _ => return None,
         })
     }
@@ -62,7 +121,15 @@ impl ConverterId {
     pub fn produces_xml(self) -> bool {
         matches!(
             self,
-            ConverterId::SheetXml | ConverterId::Json | ConverterId::Xml
+            ConverterId::SheetXml
+                | ConverterId::Json
+                | ConverterId::Xml
+                | ConverterId::Reqif
+                | ConverterId::Visio
+                | ConverterId::MsProject
+                | ConverterId::Xmi
+                | ConverterId::Media
+                | ConverterId::FileProperties
         )
     }
 }
@@ -121,7 +188,8 @@ pub fn convert(
     path: &Path,
     options: &ConvertOptions,
 ) -> Result<Intermediate, ConvertError> {
-    if path.is_dir() {
+    // Les propriétés de fichiers décrivent elles-mêmes un répertoire.
+    if path.is_dir() && id != ConverterId::FileProperties {
         return convert_directory(id, path, options);
     }
     let text = convert_file(id, path, options)?;
@@ -144,7 +212,29 @@ fn convert_file(
         ConverterId::SheetXml => sheet::convert_xml(path),
         ConverterId::Pdf => pdf::convert(path, options),
         ConverterId::Json => json::convert(path),
+        ConverterId::Html => html::convert(path, options),
+        ConverterId::Markdown => markdown::convert(path, options),
+        ConverterId::Rtf => rtf::convert(path, options),
+        ConverterId::Odt => odf::convert(path, options),
+        ConverterId::Pptx => pptx::convert(path, options),
+        ConverterId::Mif => mif::convert(path, options),
+        ConverterId::Reqif => reqif::convert(path, options),
+        ConverterId::Visio => visio::convert(path, options),
+        ConverterId::MsProject => msproject::convert(path, options),
+        ConverterId::Xmi => xmi::convert(path, options),
+        ConverterId::Media => media::convert(path, options),
+        ConverterId::FileProperties => fileprops::convert(path, options),
     }
+}
+
+/// Date UTC au format ISO 8601.
+pub fn iso_date(t: std::time::SystemTime) -> String {
+    fileprops::iso(t)
+}
+
+/// Fragment HTML → lignes stylées (descriptions riches des outils ALM).
+pub fn html_to_lines(html: &str) -> String {
+    html::convert_str(html)
 }
 
 pub(crate) fn read_text(path: &Path) -> Result<String, ConvertError> {
@@ -318,7 +408,7 @@ fn glob(p: &[u8], s: &[u8]) -> bool {
     p[pi..].iter().all(|&c| c == b'*')
 }
 
-pub(crate) fn xml_escape(text: &str) -> String {
+pub fn xml_escape(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
     for c in text.chars() {
         match c {
@@ -335,7 +425,7 @@ pub(crate) fn xml_escape(text: &str) -> String {
     out
 }
 
-fn strip_xml_declaration(xml: &str) -> &str {
+pub(crate) fn strip_xml_declaration(xml: &str) -> &str {
     let xml = xml.trim_start_matches('\u{feff}').trim_start();
     if xml.starts_with("<?xml") {
         xml.find("?>").map(|i| &xml[i + 2..]).unwrap_or(xml)

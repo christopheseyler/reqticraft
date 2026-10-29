@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Types ReqtiCraft pour HTML, Markdown, AsciiDoc et PowerPoint. Exigences « REQ12 : libellé » en début de paragraphe, texte dans le paragraphe suivant, « Priority : High », références « [Covers: …] ». -->
+<Types coupling="Markup">
+<DocumentType name="HTML" convertTool="HTMLWithStyles" description="HTML : titres H1…H6, exigences en paragraphe">
+<FileExtension value="html" />
+<FileExtension value="htm" />
+<ElementType name="Heading" elementClass="Section" regularExpression="^H(\d)(?:\.[^\t]*)?\t(?:(\d+(?:\.\d+)*)\.?[ \t]+)?(.+)$" index1="6" index2="1" index3="2" />
+<ElementType name="Requirement" elementClass="Requirement" regularExpression="^(?:P|LI|DIV|TD|DD)(?:\.[^\t]*)?\t[ \t]*([\w\-]*REQ[\w\-]*\d)(?:[ \t]*:[ \t]*(.*\S))?[ \t]*$" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" regularExpression="\[Covers[ \t]*:[ \t]*([^\]]*)\]" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" regularExpression="^[^\t\n]*\t[ \t]*Priority[ \t]*:[ \t]*(\S+)" printExpression="Priority : $i">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+<TerminalType name="Text" elementClass="Text" regularExpression="^(?:P|LI|DD)(?:\.[^\t]*)?\t(?![\w\-]*REQ[\w\-]*\d[ \t]*:)(?!\[Covers)(?![ \t]*Priority[ \t]*:)(.+)$" />
+</DocumentType>
+<DocumentType name="Markdown" convertTool="Markdown" description="Markdown : titres #, exigences en paragraphe">
+<FileExtension value="md" />
+<FileExtension value="markdown" />
+<ElementType name="Heading" elementClass="Section" regularExpression="^H(\d)(?:\.[^\t]*)?\t(?:(\d+(?:\.\d+)*)\.?[ \t]+)?(.+)$" index1="6" index2="1" index3="2" />
+<ElementType name="Requirement" elementClass="Requirement" regularExpression="^(?:P|LI|DIV|TD|DD)(?:\.[^\t]*)?\t[ \t]*([\w\-]*REQ[\w\-]*\d)(?:[ \t]*:[ \t]*(.*\S))?[ \t]*$" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" regularExpression="\[Covers[ \t]*:[ \t]*([^\]]*)\]" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" regularExpression="^[^\t\n]*\t[ \t]*Priority[ \t]*:[ \t]*(\S+)" printExpression="Priority : $i">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+<TerminalType name="Text" elementClass="Text" regularExpression="^(?:P|LI|DD)(?:\.[^\t]*)?\t(?![\w\-]*REQ[\w\-]*\d[ \t]*:)(?!\[Covers)(?![ \t]*Priority[ \t]*:)(.+)$" />
+</DocumentType>
+<DocumentType name="AsciiDoc" convertTool="AsciiDoc" description="AsciiDoc : titres =, exigences en paragraphe, texte en bloc ____">
+<FileExtension value="adoc" />
+<FileExtension value="asciidoc" />
+<ElementType name="Heading 1" elementClass="Section" regularExpression="^=[ \t]+(.+)$" index1="2" />
+<ElementType name="Heading 2" elementClass="Section" regularExpression="^==[ \t]+(.+)$" index1="2">
+<ParentType name="Heading 1" />
+</ElementType>
+<ElementType name="Heading 3" elementClass="Section" regularExpression="^===[ \t]+(.+)$" index1="2">
+<ParentType name="Heading 2" />
+</ElementType>
+<ElementType name="Requirement" elementClass="Requirement" regularExpression="^[ \t]*(?:\*\*)?([\w\-]*REQ[\w\-]*\d)(?:\*\*)?(?:[ \t]*:[ \t]*(.*\S))?[ \t]*$" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" regularExpression="\[Covers[ \t]*:[ \t]*([^\]]*)\]" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" regularExpression="^[ \t]*[\-\*]?[ \t]*Priority[ \t]*::?[ \t]*(\S+)" printExpression="Priority : $i">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+<TerminalType name="Text" elementClass="Text" regularExpression="^____\n([\s\S]*?)\n____$" />
+</DocumentType>
+<DocumentType name="PowerPoint" convertTool="PowerPoint" description="PowerPoint (.pptx) et Google Slides : une section par diapositive">
+<FileExtension value="pptx" />
+<ElementType name="Slide" elementClass="Section" regularExpression="^SLIDE (\d+)$" />
+<ElementType name="Requirement" elementClass="Requirement" regularExpression="^\[?([\w\-]*REQ[\w\-]*\d)(?:[ \t]*:[ \t]*([^\]\n]*\S))?\]?[ \t]*$" />
+<ElementType name="Covers Reference" elementClass="CoverLink" printExpression="[Covers: $i]" regularExpression="\[Covers[ \t]*:[ \t]*([^\]]*)\]" subExpression="([^,;\s]+)" />
+<ElementType name="Priority" elementClass="Attribute" regularExpression="^[ \t]*Priority[ \t]*:[ \t]*(\S+)" printExpression="Priority : $i">
+<EnumValue value="High" />
+<EnumValue value="Medium" />
+<EnumValue value="Low" />
+</ElementType>
+<TerminalType name="Text" elementClass="Text" regularExpression="^(?![\w\-]*REQ[\w\-]*\d[ \t]*:)(?!\[Covers)(?![ \t]*Priority[ \t]*:)(?!SLIDE |SHAPES$|NOTES$|COMMENTS$|PICTURE )(.+)$" />
+</DocumentType>
+</Types>

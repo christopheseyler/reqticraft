@@ -1,0 +1,26 @@
+<MIFFile 2019> # Corpus de test ReqtiCraft
+<TextFlow <TFTag `A'>
+ <Para <PgfTag `Heading1'> <ParaLine <String `1. Spécification du thermostat'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `Document de test ReqtiCraft, créé pour le corpus maison.'>>>
+ <Para <PgfTag `Heading2'> <ParaLine <String `2. Mesure'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `THS_REQ1 : Mesure de la température'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Le thermostat doit mesurer la température ambiante toutes les 10 secondes.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `Priority : High'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `THS_REQ2 : Précision de mesure'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `La précision de mesure doit être meilleure que 0,5 °C entre 5 °C et 35 °C.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `Priority : High'>>>
+ <Para <PgfTag `Heading2'> <ParaLine <String `3. Régulation'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `THS_REQ3 : Consigne'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `L\qutilisateur doit pouvoir régler une consigne entre 7 °C et 30 °C.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `Priority : Medium'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `THS_REQ4 : Hystérésis'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Le chauffage doit être commandé avec une hystérésis de 0,3 °C.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `Priority : Medium'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `THS_REQ5 : Mode absence'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Un mode absence doit abaisser la consigne de 3 °C.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `Priority : Low'>>>
+ <Para <PgfTag `Heading2'> <ParaLine <String `4. Connectivité'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `THS_REQ6 : Pilotage à distance'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `La consigne doit pouvoir être modifiée depuis une application mobile.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `Priority : Low'>>>
+>

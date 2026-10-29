@@ -9,9 +9,11 @@ publish.workspace = true
 [dependencies]
 rc-analysis.workspace = true
 rc-capture.workspace = true
+rc-connect.workspace = true
 rc-convert.workspace = true
 rc-interop.workspace = true
 rc-model.workspace = true
+rc-plugin.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]

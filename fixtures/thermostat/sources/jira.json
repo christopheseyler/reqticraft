@@ -1,0 +1,76 @@
+{
+ "startAt": 0,
+ "total": 7,
+ "issues": [
+  {
+   "key": "DES_REQ1",
+   "fields": {
+    "summary": "Échantillonnage du capteur",
+    "description": "Le capteur est lu par interruption toutes les 10 s.\n[Covers: THS_REQ1]",
+    "priority": {
+     "name": "Medium"
+    }
+   }
+  },
+  {
+   "key": "DES_REQ2",
+   "fields": {
+    "summary": "Étalonnage",
+    "description": "Une table d'étalonnage en 16 points corrige la non-linéarité du capteur.\n[Covers: THS_REQ2]",
+    "priority": {
+     "name": "Medium"
+    }
+   }
+  },
+  {
+   "key": "DES_REQ3",
+   "fields": {
+    "summary": "Bornes de consigne",
+    "description": "La consigne est saturée entre 7 °C et 30 °C.\n[Covers: THS_REQ3]",
+    "priority": {
+     "name": "Medium"
+    }
+   }
+  },
+  {
+   "key": "DES_REQ4",
+   "fields": {
+    "summary": "Commande tout-ou-rien",
+    "description": "Le relais est commandé avec un seuil haut et un seuil bas.\n[Covers: THS_REQ4]",
+    "priority": {
+     "name": "Medium"
+    }
+   }
+  },
+  {
+   "key": "DES_REQ5",
+   "fields": {
+    "summary": "API de consigne",
+    "description": "Une API REST expose la lecture et l'écriture de la consigne.\n[Covers: THS_REQ6, THS_REQ99]",
+    "priority": {
+     "name": "Medium"
+    }
+   }
+  },
+  {
+   "key": "DES_REQ6",
+   "fields": {
+    "summary": "Chien de garde",
+    "description": "Un chien de garde redémarre le microcontrôleur après 2 s sans activité.\n",
+    "priority": {
+     "name": "Medium"
+    }
+   }
+  },
+  {
+   "key": "DES_REQ7",
+   "fields": {
+    "summary": "Journal d'erreurs",
+    "description": "Les 100 dernières erreurs sont conservées en mémoire non volatile.\n",
+    "priority": {
+     "name": "Medium"
+    }
+   }
+  }
+ ]
+}

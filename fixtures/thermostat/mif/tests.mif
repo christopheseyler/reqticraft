@@ -1,0 +1,25 @@
+<MIFFile 2019> # Corpus de test ReqtiCraft
+<TextFlow <TFTag `A'>
+ <Para <PgfTag `Heading1'> <ParaLine <String `1. Plan de tests du thermostat'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `Document de test ReqtiCraft, créé pour le corpus maison.'>>>
+ <Para <PgfTag `Heading2'> <ParaLine <String `2. Tests unitaires'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `TST_REQ1 : Période d\qéchantillonnage'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Vérifier 6 lectures par minute.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `[Covers: DES_REQ1]'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `TST_REQ2 : Table d\qétalonnage'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Comparer 16 points à une sonde de référence.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `[Covers: DES_REQ2]'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `TST_REQ3 : Saturation'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Envoyer 5 °C et 35 °C, vérifier 7 °C et 30 °C.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `[Covers: DES_REQ3]'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `TST_REQ4 : Seuils du relais'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Balayer la température autour de la consigne.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `[Covers: DES_REQ4]'>>>
+ <Para <PgfTag `Heading2'> <ParaLine <String `3. Tests d\qintégration'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `TST_REQ5 : API REST'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Lire puis écrire la consigne par l\qAPI.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `[Covers: DES_REQ5]'>>>
+ <Para <PgfTag `Requirement_ID'> <ParaLine <String `TST_REQ6 : Chien de garde'>>>
+ <Para <PgfTag `Requirement_Text'> <ParaLine <String `Bloquer la boucle principale, vérifier le redémarrage.'>>>
+ <Para <PgfTag `Body'> <ParaLine <String `[Covers: DES_REQ6]'>>>
+>

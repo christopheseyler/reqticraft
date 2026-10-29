@@ -379,7 +379,7 @@ fn run_text(p: Node) -> String {
     s
 }
 
-fn format_number(n: u32, format: &str) -> String {
+pub(crate) fn format_number(n: u32, format: &str) -> String {
     match format {
         "lowerLetter" => letters(n).to_lowercase(),
         "upperLetter" => letters(n),

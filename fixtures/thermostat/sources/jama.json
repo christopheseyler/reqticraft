@@ -1,0 +1,80 @@
+{
+ "data": [
+  {
+   "id": 11,
+   "documentKey": "DES_REQ1",
+   "itemType": 33,
+   "fields": {
+    "name": "Échantillonnage du capteur",
+    "description": "<p>Le capteur est lu par interruption toutes les 10 s.</p><p>[Covers: THS_REQ1]</p>",
+    "status": "Approved"
+   }
+  },
+  {
+   "id": 12,
+   "documentKey": "DES_REQ2",
+   "itemType": 33,
+   "fields": {
+    "name": "Étalonnage",
+    "description": "<p>Une table d'étalonnage en 16 points corrige la non-linéarité du capteur.</p><p>[Covers: THS_REQ2]</p>",
+    "status": "Approved"
+   }
+  },
+  {
+   "id": 13,
+   "documentKey": "DES_REQ3",
+   "itemType": 33,
+   "fields": {
+    "name": "Bornes de consigne",
+    "description": "<p>La consigne est saturée entre 7 °C et 30 °C.</p><p>[Covers: THS_REQ3]</p>",
+    "status": "Approved"
+   }
+  },
+  {
+   "id": 14,
+   "documentKey": "DES_REQ4",
+   "itemType": 33,
+   "fields": {
+    "name": "Commande tout-ou-rien",
+    "description": "<p>Le relais est commandé avec un seuil haut et un seuil bas.</p><p>[Covers: THS_REQ4]</p>",
+    "status": "Approved"
+   }
+  },
+  {
+   "id": 15,
+   "documentKey": "DES_REQ5",
+   "itemType": 33,
+   "fields": {
+    "name": "API de consigne",
+    "description": "<p>Une API REST expose la lecture et l'écriture de la consigne.</p><p>[Covers: THS_REQ6, THS_REQ99]</p>",
+    "status": "Approved"
+   }
+  },
+  {
+   "id": 16,
+   "documentKey": "DES_REQ6",
+   "itemType": 33,
+   "fields": {
+    "name": "Chien de garde",
+    "description": "<p>Un chien de garde redémarre le microcontrôleur après 2 s sans activité.</p><p></p>",
+    "status": "Approved"
+   }
+  },
+  {
+   "id": 17,
+   "documentKey": "DES_REQ7",
+   "itemType": 33,
+   "fields": {
+    "name": "Journal d'erreurs",
+    "description": "<p>Les 100 dernières erreurs sont conservées en mémoire non volatile.</p><p></p>",
+    "status": "Approved"
+   }
+  }
+ ],
+ "itemTypes": [
+  {
+   "id": 33,
+   "display": "Conception"
+  }
+ ]
+}

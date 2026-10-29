@@ -1,0 +1,166 @@
+{
+ "data": [
+  {
+   "type": "workitems",
+   "id": "THS/DES_REQ1",
+   "attributes": {
+    "id": "DES_REQ1",
+    "title": "Échantillonnage du capteur",
+    "type": "designRequirement",
+    "status": "draft",
+    "description": {
+     "type": "text/html",
+     "value": "<p>Le capteur est lu par interruption toutes les 10 s.</p>"
+    }
+   },
+   "relationships": {
+    "linkedWorkItems": {
+     "data": [
+      {
+       "type": "linkedworkitems",
+       "id": "THS/DES_REQ1/implements/THS/THS_REQ1"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "workitems",
+   "id": "THS/DES_REQ2",
+   "attributes": {
+    "id": "DES_REQ2",
+    "title": "Étalonnage",
+    "type": "designRequirement",
+    "status": "draft",
+    "description": {
+     "type": "text/html",
+     "value": "<p>Une table d'étalonnage en 16 points corrige la non-linéarité du capteur.</p>"
+    }
+   },
+   "relationships": {
+    "linkedWorkItems": {
+     "data": [
+      {
+       "type": "linkedworkitems",
+       "id": "THS/DES_REQ2/implements/THS/THS_REQ2"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "workitems",
+   "id": "THS/DES_REQ3",
+   "attributes": {
+    "id": "DES_REQ3",
+    "title": "Bornes de consigne",
+    "type": "designRequirement",
+    "status": "draft",
+    "description": {
+     "type": "text/html",
+     "value": "<p>La consigne est saturée entre 7 °C et 30 °C.</p>"
+    }
+   },
+   "relationships": {
+    "linkedWorkItems": {
+     "data": [
+      {
+       "type": "linkedworkitems",
+       "id": "THS/DES_REQ3/implements/THS/THS_REQ3"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "workitems",
+   "id": "THS/DES_REQ4",
+   "attributes": {
+    "id": "DES_REQ4",
+    "title": "Commande tout-ou-rien",
+    "type": "designRequirement",
+    "status": "draft",
+    "description": {
+     "type": "text/html",
+     "value": "<p>Le relais est commandé avec un seuil haut et un seuil bas.</p>"
+    }
+   },
+   "relationships": {
+    "linkedWorkItems": {
+     "data": [
+      {
+       "type": "linkedworkitems",
+       "id": "THS/DES_REQ4/implements/THS/THS_REQ4"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "workitems",
+   "id": "THS/DES_REQ5",
+   "attributes": {
+    "id": "DES_REQ5",
+    "title": "API de consigne",
+    "type": "designRequirement",
+    "status": "draft",
+    "description": {
+     "type": "text/html",
+     "value": "<p>Une API REST expose la lecture et l'écriture de la consigne.</p>"
+    }
+   },
+   "relationships": {
+    "linkedWorkItems": {
+     "data": [
+      {
+       "type": "linkedworkitems",
+       "id": "THS/DES_REQ5/implements/THS/THS_REQ6"
+      },
+      {
+       "type": "linkedworkitems",
+       "id": "THS/DES_REQ5/implements/THS/THS_REQ99"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "workitems",
+   "id": "THS/DES_REQ6",
+   "attributes": {
+    "id": "DES_REQ6",
+    "title": "Chien de garde",
+    "type": "designRequirement",
+    "status": "draft",
+    "description": {
+     "type": "text/html",
+     "value": "<p>Un chien de garde redémarre le microcontrôleur après 2 s sans activité.</p>"
+    }
+   },
+   "relationships": {
+    "linkedWorkItems": {
+     "data": []
+    }
+   }
+  },
+  {
+   "type": "workitems",
+   "id": "THS/DES_REQ7",
+   "attributes": {
+    "id": "DES_REQ7",
+    "title": "Journal d'erreurs",
+    "type": "designRequirement",
+    "status": "draft",
+    "description": {
+     "type": "text/html",
+     "value": "<p>Les 100 dernières erreurs sont conservées en mémoire non volatile.</p>"
+    }
+   },
+   "relationships": {
+    "linkedWorkItems": {
+     "data": []
+    }
+   }
+  }
+ ]
+}
