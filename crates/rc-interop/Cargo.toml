@@ -10,10 +10,10 @@ publish.workspace = true
 encoding_rs = "0.8.35"
 rc-model.workspace = true
 roxmltree = "0.21.2"
+serde.workspace = true
+serde_json.workspace = true
 thiserror = "2"
 
 [lints]
 workspace = true
 
-[dev-dependencies]
-serde_json.workspace = true

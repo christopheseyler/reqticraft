@@ -10,6 +10,8 @@
 //!   macro-exigence qui référence l'amont fait couvrir ses exigences contenues.
 //! - Une exigence d'un document couvrant qui ne couvre rien est dérivée.
 
+pub mod filter;
+
 use rc_model::{CapturedDocument, ElemId, ElementClass, Message, Severity};
 use serde::Serialize;
 use std::collections::{BTreeSet, HashMap, HashSet};

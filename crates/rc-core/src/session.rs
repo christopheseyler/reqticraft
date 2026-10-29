@@ -6,8 +6,12 @@
 //! [`call`] expose les mêmes requêtes sous forme `méthode + arguments JSON`, pour
 //! l'application de bureau comme pour le serveur local.
 
-use crate::{analyze_project, document_path, ProjectRun};
+use crate::{
+    analyze_captured, document_path, load_project, run_loaded, AnalysisFilter, ProjectRun,
+};
 use rc_analysis::Target;
+use rc_interop::{LoadedProject, TypeLibrary};
+use rc_model::DocumentType;
 use rc_model::{CapturedDocument, ElemId, Element, ElementClass, Severity};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -75,6 +79,10 @@ pub struct Overview {
     pub errors: usize,
     pub warnings: usize,
     pub informations: usize,
+    /// Modifications non enregistrées.
+    pub dirty: bool,
+    pub display_filter: Option<String>,
+    pub analysis_filter: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -167,27 +175,49 @@ pub struct Impact {
 /// Empreinte d'un élément, pour repérer les modifications entre deux chargements.
 type Fingerprints = HashMap<(String, String, String), String>;
 
+/// État d'édition, conservé d'une analyse à l'autre.
+#[derive(Clone, Default)]
+pub struct Edit {
+    /// Types du projet modifiés ou créés dans l'éditeur de types, prioritaires.
+    pub local_types: Vec<DocumentType>,
+    /// Types chargés avec le projet (projet, configuration, bibliothèque).
+    pub base_types: TypeLibrary,
+    pub display_filter: Option<AnalysisFilter>,
+    pub analysis_filter: Option<AnalysisFilter>,
+    /// Modifications non enregistrées.
+    pub dirty: bool,
+}
+
 pub struct Session {
     pub path: PathBuf,
     pub config_dirs: Vec<PathBuf>,
     pub run: ProjectRun,
+    pub edit: Edit,
     stamps: Vec<(PathBuf, Option<SystemTime>)>,
     changes: Vec<HashMap<ElemId, Change>>,
     up: HashMap<Target, Vec<Target>>,
     down: HashMap<Target, Vec<Target>>,
     leaves: Vec<HashSet<ElemId>>,
+    /// Éléments masqués par le filtre d'affichage.
+    hidden: HashSet<(usize, ElemId)>,
 }
 
 impl Session {
     pub fn open(path: &Path, config_dirs: &[PathBuf]) -> Result<Session, String> {
-        let run = analyze_project(path, config_dirs).map_err(|e| e.to_string())?;
-        Ok(Session::from_run(path, config_dirs, run, None))
+        let loaded = load_project(path, config_dirs).map_err(|e| e.to_string())?;
+        let edit = Edit {
+            base_types: loaded.types.clone(),
+            ..Default::default()
+        };
+        let run = run_loaded(loaded, config_dirs, None);
+        Ok(Session::from_run(path, config_dirs, run, edit, None))
     }
 
     fn from_run(
         path: &Path,
         config_dirs: &[PathBuf],
         run: ProjectRun,
+        edit: Edit,
         previous: Option<&Fingerprints>,
     ) -> Session {
         let mut stamps = vec![(path.to_owned(), stamp(path))];
@@ -232,24 +262,124 @@ impl Session {
             .iter()
             .map(|d| rc_analysis::leaf_requirements(d).into_iter().collect())
             .collect();
-        Session {
+        let mut session = Session {
             path: path.to_owned(),
             config_dirs: config_dirs.to_vec(),
             run,
+            edit,
             stamps,
             changes,
             up,
             down,
             leaves,
-        }
+            hidden: HashSet::new(),
+        };
+        session.compute_hidden();
+        session
     }
 
     /// Relance l'analyse ; les éléments nouveaux ou modifiés sont signalés.
+    ///
+    /// Sans modification en cours, le projet est relu sur le disque ; sinon
+    /// seuls les documents sont recapturés.
     pub fn reload(&mut self) -> Result<(), String> {
         let previous = self.fingerprints();
-        let run = analyze_project(&self.path, &self.config_dirs).map_err(|e| e.to_string())?;
-        *self = Session::from_run(&self.path, &self.config_dirs, run, Some(&previous));
+        let mut edit = self.edit.clone();
+        let loaded = if edit.dirty {
+            self.run.loaded.clone()
+        } else {
+            let l = load_project(&self.path, &self.config_dirs).map_err(|e| e.to_string())?;
+            edit.base_types = l.types.clone();
+            l
+        };
+        self.rerun(loaded, edit, Some(&previous));
         Ok(())
+    }
+
+    /// Analyse de nouveau un projet (modifié ou non) avec l'état d'édition donné.
+    fn rerun(&mut self, mut loaded: LoadedProject, edit: Edit, previous: Option<&Fingerprints>) {
+        let mut types = TypeLibrary::default();
+        types.extend(edit.local_types.iter().cloned());
+        types.extend(edit.base_types.visible().into_iter().cloned());
+        loaded.types = types;
+        let run = run_loaded(loaded, &self.config_dirs, edit.analysis_filter.as_ref());
+        let path = self.path.clone();
+        *self = Session::from_run(&path, &self.config_dirs, run, edit, previous);
+    }
+
+    pub(crate) fn rerun_with(&mut self, loaded: LoadedProject, edit: Edit) {
+        self.rerun(loaded, edit, None);
+    }
+
+    /// Date de modification du fichier de projet, après un enregistrement.
+    pub(crate) fn refresh_stamp(&mut self) {
+        let p = self.path.clone();
+        let s = stamp(&p);
+        self.stamps[0] = (p, s);
+    }
+
+    /// Analyse de nouveau sans recapturer (changement de filtre).
+    pub(crate) fn refilter(&mut self) {
+        let analysis = analyze_captured(
+            &self.run.loaded,
+            &self.run.flat,
+            &self.run.captured,
+            self.edit.analysis_filter.as_ref(),
+        );
+        let run = ProjectRun {
+            loaded: self.run.loaded.clone(),
+            flat: self.run.flat.clone(),
+            captured: std::mem::take(&mut self.run.captured),
+            analysis,
+        };
+        let changes = std::mem::take(&mut self.changes);
+        let path = self.path.clone();
+        *self = Session::from_run(&path, &self.config_dirs, run, self.edit.clone(), None);
+        self.changes = changes;
+    }
+
+    fn compute_hidden(&mut self) {
+        self.hidden.clear();
+        let Some((filter, params)) = &self.edit.display_filter else {
+            return;
+        };
+        let a = &self.run.analysis;
+        let ctx = rc_analysis::filter::Context {
+            analysis: Some(a),
+            params,
+        };
+        for (d, doc) in a.documents.iter().enumerate() {
+            for e in 0..doc.elements.len() {
+                if doc.elements[e].class.is_structural()
+                    && !rc_analysis::filter::passes(filter, d, doc, e, &ctx)
+                {
+                    self.hidden.insert((d, e));
+                }
+            }
+        }
+        // Un élément hors de la classe filtrée (section…) est masqué quand tous
+        // ses descendants structurels le sont.
+        for (d, doc) in a.documents.iter().enumerate() {
+            for e in (0..doc.elements.len()).rev() {
+                let el = &doc.elements[e];
+                if !el.class.is_structural()
+                    || self.hidden.contains(&(d, e))
+                    || rc_analysis::filter::applies_to(filter, el.class)
+                {
+                    continue;
+                }
+                let structural: Vec<ElemId> = doc
+                    .descendants(e)
+                    .into_iter()
+                    .filter(|&k| doc.elements[k].class.is_structural())
+                    .collect();
+                if !structural.is_empty()
+                    && structural.iter().all(|k| self.hidden.contains(&(d, *k)))
+                {
+                    self.hidden.insert((d, e));
+                }
+            }
+        }
     }
 
     fn fingerprints(&self) -> Fingerprints {
@@ -358,6 +488,17 @@ impl Session {
             errors: a.count(Severity::Error),
             warnings: a.count(Severity::Warning),
             informations: a.count(Severity::Information),
+            dirty: self.edit.dirty,
+            display_filter: self
+                .edit
+                .display_filter
+                .as_ref()
+                .map(|(f, _)| f.name.clone()),
+            analysis_filter: self
+                .edit
+                .analysis_filter
+                .as_ref()
+                .map(|(f, _)| f.name.clone()),
             channels: a
                 .channels
                 .iter()
@@ -383,7 +524,7 @@ impl Session {
         while let Some((e, depth)) = stack.pop() {
             let el = &doc.elements[e];
             stack.extend(el.children.iter().rev().map(|&c| (c, depth + 1)));
-            if !el.class.is_structural() {
+            if !el.class.is_structural() || self.hidden.contains(&(d, e)) {
                 continue;
             }
             let status = self.status(d, e);
@@ -716,6 +857,12 @@ pub fn call(session: &mut Option<Session>, method: &str, args: &Value) -> Result
     if method == "version" {
         return Ok(json!({ "version": env!("CARGO_PKG_VERSION") }));
     }
+    if method == "newProject" {
+        let path: PathBuf = arg(args, "path")?;
+        crate::session_edit::create_project(&path)?;
+        *session = Some(Session::open(&path, &[])?);
+        return to_json(session.as_ref().map(Session::overview));
+    }
     if method == "close" {
         *session = None;
         return Ok(Value::Null);
@@ -741,6 +888,47 @@ pub fn call(session: &mut Option<Session>, method: &str, args: &Value) -> Result
             let p = s.source(arg(args, "document")?)?;
             open_with_system(&p)?;
             Ok(Value::Null)
+        }
+        "project" => to_json(s.project_info()),
+        "updateProject" => {
+            s.update_project(arg(args, "project")?)?;
+            to_json(s.overview())
+        }
+        "types" => to_json(s.type_infos()),
+        "type" => to_json(s.document_type(&arg::<String>(args, "name")?)?),
+        "saveType" => {
+            let previous: Option<String> = arg(args, "previous")?;
+            s.save_type(arg(args, "type")?, previous.as_deref())?;
+            to_json(s.overview())
+        }
+        "deleteType" => {
+            s.delete_type(&arg::<String>(args, "name")?)?;
+            to_json(s.overview())
+        }
+        "testType" => {
+            let params: Option<Vec<(String, String)>> = arg(args, "params")?;
+            let file: PathBuf = arg(args, "file")?;
+            to_json(s.test_type(&arg(args, "type")?, &file, params.unwrap_or_default())?)
+        }
+        "filters" => to_json(s.filters_info()),
+        "saveFilters" => {
+            s.save_filters(arg(args, "filters")?)?;
+            to_json(s.overview())
+        }
+        "applyFilter" => {
+            let name: Option<String> = arg(args, "name")?;
+            let params: Option<HashMap<String, String>> = arg(args, "params")?;
+            s.apply_filter(
+                &arg::<String>(args, "mode")?,
+                name.as_deref(),
+                params.unwrap_or_default(),
+            )?;
+            to_json(s.overview())
+        }
+        "save" => {
+            let path: Option<PathBuf> = arg(args, "path")?;
+            let saved = s.save(path)?;
+            Ok(json!({ "path": saved }))
         }
         _ => Err(format!("méthode inconnue : {method}")),
     }

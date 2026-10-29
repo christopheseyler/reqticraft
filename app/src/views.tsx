@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { call, desktop, errorText, pickProject } from "./api";
+import { call, desktop, errorText, pickProject, pickSavePath } from "./api";
 import { Details } from "./Details";
 import type { Impact as ImpactData, ImpactNode, Overview, Page, Problem, Selection, Severity } from "./types";
 import { ChangeBadge, ElementLink, Meter, percent, SeverityBadge, StatusBadge } from "./ui";
@@ -11,18 +11,25 @@ type SelectFn = (document: number, element: number) => void;
 export function Home({
   recent,
   onOpen,
+  onCreate,
   busy,
   error,
 }: {
   recent: string[];
   onOpen: (path: string) => void;
+  onCreate: (path: string) => void;
   busy: boolean;
   error: string | null;
 }) {
   const [path, setPath] = useState("");
+  const [newPath, setNewPath] = useState("");
   const browse = async () => {
     const p = await pickProject();
     if (p) onOpen(p);
+  };
+  const browseNew = async () => {
+    const p = await pickSavePath();
+    if (p) onCreate(p);
   };
   return (
     <div className="page narrow">
@@ -55,6 +62,35 @@ export function Home({
           />
           <button className="button secondary" type="submit" disabled={busy || !path.trim()}>
             Ouvrir
+          </button>
+        </form>
+      </div>
+      <h2>Nouveau projet</h2>
+      <p className="muted">
+        Un projet <code>.rqtf</code> reste lisible par Reqtify ; le format natif <code>.rcproj</code> regroupe projet,
+        types et filtres dans un seul fichier JSON.
+      </p>
+      <div className="open-row">
+        {desktop() && (
+          <button className="button secondary" onClick={browseNew} disabled={busy}>
+            Créer un projet…
+          </button>
+        )}
+        <form
+          className="path-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (newPath.trim()) onCreate(newPath.trim());
+          }}
+        >
+          <input
+            aria-label="Chemin du nouveau projet"
+            placeholder="Chemin du nouveau projet, par exemple C:\projets\tutoriel.rqtf"
+            value={newPath}
+            onChange={(e) => setNewPath(e.target.value)}
+          />
+          <button className="button secondary" type="submit" disabled={busy || !newPath.trim()}>
+            Créer
           </button>
         </form>
       </div>

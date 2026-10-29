@@ -358,7 +358,8 @@ Après le MVP :
 | M3 Convertisseurs P0 | Fait : texte, docx, xlsx/xls/ods/csv (texte et XML), PDF, code (répertoires), JSON, XML ; arbres d'analyse XML ; projets composites |
 | Connecteurs P1 et P2 | Fait (avant M4, à la demande) : voir ci-dessous et `interop-formats.md` §12 |
 | M4 Interface v1 | Fait : ouverture de projet (sélecteur ou chemin, projets récents), tableau de bord, vues Couverture, Impact et Problèmes, panneau Détails, ouverture du document source, rechargement des documents modifiés avec marquage des éléments nouveaux ou modifiés |
-| M5 et M6 | À faire (édition, filtres, instantanés, rapports) |
+| M5 Édition et filtres | Fait : nouveau projet, éditeur de projet (diagramme des documents et des canaux, propriétés), éditeur de types (duplication, éléments, expressions, rôles des groupes, testeur sur un fichier avec l'intermédiaire), filtres (conditions ET/OU, paramètres `$nom`, application à l'affichage ou à l'analyse), enregistrement `.rqtf` + `.types` + `.filters` (XML) ou natif `.rcproj` (JSON) |
+| M6 Instantanés et rapports | À faire |
 
 Écarts par rapport au plan : le PDF utilise `pdf-extract` plutôt que PDFium (voir §2) ; un crate
 `rc-core` regroupe l'orchestration commune à la CLI et à l'application. Limites connues du P0 : pas de
@@ -373,6 +374,15 @@ compare les dates de modification toutes les deux secondes au lieu d'utiliser `n
 dépendance, même comportement pour l'utilisateur) ; l'interface utilise React et des CSS maison, sans
 Tailwind, Radix ni TanStack (listes paginées par le cœur, 200 éléments par page) ; le document source
 s'ouvre avec l'application associée du système, sans positionnement à l'élément.
+
+**Édition et filtres (M5).** `rc-interop::write` écrit les `.rqtf`, `.types` et `.filters` au format
+XML que nos lecteurs reconnaissent (aller-retour testé). Le format natif `.rcproj` est un fichier JSON
+unique (`NativeProject` : projet, types propres, filtres). Les filtres sont évalués par
+`rc-analysis::filter` ; en analyse, les éléments filtrés sont neutralisés puis l'analyse est refaite.
+Écarts : les identifiants d'opérateurs autres que `equal`, `isPresent` et `isAbsent` (seuls observés,
+`interop-formats.md` §6) sont propres à ReqtiCraft ; les 16 `Booleans` des filtres INI ne sont pas
+réécrits ; le diagramme est un SVG maison (pas de React Flow) ; les dossiers de projet, sans forme XML
+observée, ne sont pas créés par l'éditeur.
 
 **Connecteurs P1 et P2.**
 

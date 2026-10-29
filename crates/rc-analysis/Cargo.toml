@@ -7,6 +7,7 @@ rust-version.workspace = true
 publish.workspace = true
 
 [dependencies]
+pcre2 = "0.2.11"
 rc-model.workspace = true
 serde.workspace = true
 

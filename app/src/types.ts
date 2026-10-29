@@ -52,6 +52,9 @@ export interface Overview {
   errors: number;
   warnings: number;
   informations: number;
+  dirty: boolean;
+  displayFilter: string | null;
+  analysisFilter: string | null;
 }
 
 export interface ElementRef {

@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { call, errorText } from "./api";
+import { call, desktop, errorText, pickSavePath } from "./api";
+import { FilterEditor } from "./FilterEditor";
+import { ProjectEditor } from "./ProjectEditor";
+import { TypeEditor } from "./TypeEditor";
 import type { Overview, Selection, Severity } from "./types";
 import { Coverage, Dashboard, Home, Impact, Problems } from "./views";
 
@@ -10,6 +13,9 @@ const VIEWS = [
   { id: "coverage", label: "Couverture" },
   { id: "impact", label: "Impact" },
   { id: "problems", label: "Problèmes" },
+  { id: "project", label: "Projet" },
+  { id: "types", label: "Types" },
+  { id: "filters", label: "Filtres" },
 ] as const;
 
 type ViewId = (typeof VIEWS)[number]["id"];
@@ -82,6 +88,54 @@ export function App() {
     [recent],
   );
 
+  const create = useCallback(
+    async (path: string) => {
+      setBusy(true);
+      setError(null);
+      try {
+        const o = await call<Overview>("newProject", { path });
+        setOverview(o);
+        setSelection(null);
+        setDocument(0);
+        setVersion((v) => v + 1);
+        setView("project");
+        const list = [path, ...recent.filter((r) => r !== path)].slice(0, 8);
+        setRecent(list);
+        saveRecent(list);
+      } catch (e) {
+        setError(errorText(e));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [recent],
+  );
+
+  // Après une modification (projet, types, filtres) : nouvelle analyse.
+  const applied = useCallback((o: Overview) => {
+    setOverview(o);
+    setSelection(null);
+    setVersion((v) => v + 1);
+  }, []);
+
+  const save = useCallback(
+    async (as: boolean) => {
+      if (!overview) return;
+      let path: string | null | undefined = undefined;
+      if (as) {
+        path = desktop() ? await pickSavePath(overview.path) : window.prompt("Enregistrer sous (.rqtf ou .rcproj)", overview.path);
+        if (!path) return;
+      }
+      try {
+        await call<{ path: string }>("save", path ? { path } : {});
+        setOverview(await call<Overview>("overview"));
+      } catch (e) {
+        window.alert(errorText(e));
+      }
+    },
+    [overview],
+  );
+
   const reload = useCallback(async () => {
     setBusy(true);
     try {
@@ -136,6 +190,21 @@ export function App() {
         </div>
       </nav>
       <main className="content">
+        {overview && view !== "home" && (
+          <div className="projectbar">
+            <span className="projectbar-name">{overview.name}</span>
+            {overview.dirty && <span className="badge change">modifié</span>}
+            {overview.displayFilter && <span className="badge">affichage : {overview.displayFilter}</span>}
+            {overview.analysisFilter && <span className="badge status-derived">analyse : {overview.analysisFilter}</span>}
+            <span className="grow" />
+            <button className="button secondary small" onClick={() => save(false)} disabled={!overview.dirty}>
+              Enregistrer
+            </button>
+            <button className="button secondary small" onClick={() => save(true)}>
+              Enregistrer sous…
+            </button>
+          </div>
+        )}
         {changed.length > 0 && (
           <div className="banner" role="status">
             <span>
@@ -148,7 +217,7 @@ export function App() {
           </div>
         )}
         {view === "home" || !overview ? (
-          <Home recent={recent} onOpen={open} busy={busy} error={error} />
+          <Home recent={recent} onOpen={open} onCreate={create} busy={busy} error={error} />
         ) : view === "dashboard" ? (
           <Dashboard
             overview={overview}
@@ -173,6 +242,12 @@ export function App() {
           />
         ) : view === "impact" ? (
           <Impact selection={selection} onSelect={select} version={version} />
+        ) : view === "project" ? (
+          <ProjectEditor key={version} onApplied={applied} />
+        ) : view === "types" ? (
+          <TypeEditor onSaved={applied} />
+        ) : view === "filters" ? (
+          <FilterEditor onChanged={applied} />
         ) : (
           <Problems severity={severity} setSeverity={setSeverity} onSelect={select} version={version} />
         )}

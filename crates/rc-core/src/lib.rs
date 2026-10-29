@@ -15,6 +15,7 @@ use rc_model::{
 use std::path::{Path, PathBuf};
 
 pub mod session;
+pub mod session_edit;
 
 pub use rc_analysis;
 pub use rc_connect;
@@ -391,15 +392,56 @@ pub fn intermediate(
 pub struct ProjectRun {
     pub loaded: LoadedProject,
     pub flat: FlatProject,
+    /// Documents capturés, avant tout filtre d'analyse.
+    pub captured: Vec<CapturedDocument>,
     pub analysis: Analysis,
 }
+
+/// Filtre d'analyse et valeurs de ses paramètres.
+pub type AnalysisFilter = (rc_model::Filter, std::collections::HashMap<String, String>);
 
 /// Charge et analyse un projet.
 pub fn analyze_project(path: &Path, config_dirs: &[PathBuf]) -> Result<ProjectRun, CoreError> {
     let loaded = load_project(path, config_dirs)?;
+    Ok(run_loaded(loaded, config_dirs, None))
+}
+
+/// Analyse un projet déjà chargé (éventuellement modifié en mémoire).
+pub fn run_loaded(
+    loaded: LoadedProject,
+    config_dirs: &[PathBuf],
+    filter: Option<&AnalysisFilter>,
+) -> ProjectRun {
     let flat = flatten(&loaded, config_dirs);
-    let documents: Vec<CapturedDocument> = flat.documents.iter().map(capture_document).collect();
-    let mut analysis = rc_analysis::analyze(documents, &flat.channels);
+    let captured: Vec<CapturedDocument> = flat.documents.iter().map(capture_document).collect();
+    let analysis = analyze_captured(&loaded, &flat, &captured, filter);
+    ProjectRun {
+        loaded,
+        flat,
+        captured,
+        analysis,
+    }
+}
+
+/// Analyse des documents déjà capturés. Avec un filtre d'analyse, les éléments
+/// filtrés sont ignorés et les taux recalculés ; les conditions sur l'état de
+/// couverture sont évaluées sur l'analyse sans filtre.
+pub fn analyze_captured(
+    loaded: &LoadedProject,
+    flat: &FlatProject,
+    captured: &[CapturedDocument],
+    filter: Option<&AnalysisFilter>,
+) -> Analysis {
+    let mut analysis = rc_analysis::analyze(captured.to_vec(), &flat.channels);
+    if let Some((f, params)) = filter {
+        let mut documents = captured.to_vec();
+        let ctx = rc_analysis::filter::Context {
+            analysis: Some(&analysis),
+            params,
+        };
+        rc_analysis::filter::neutralize(&mut documents, f, &ctx);
+        analysis = rc_analysis::analyze(documents, &flat.channels);
+    }
     analysis.messages.extend(flat.messages.iter().cloned());
     analysis
         .messages
@@ -407,11 +449,7 @@ pub fn analyze_project(path: &Path, config_dirs: &[PathBuf]) -> Result<ProjectRu
             severity: Severity::Warning,
             ..project_message("projectFile", w.clone())
         }));
-    Ok(ProjectRun {
-        loaded,
-        flat,
-        analysis,
-    })
+    analysis
 }
 
 /// Convertit, capture et complète un document. Les problèmes deviennent des

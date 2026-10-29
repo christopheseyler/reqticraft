@@ -1,20 +1,76 @@
 //! Interopérabilité avec les fichiers Reqtify : `.rqtf` (XML et INI), `.types`,
 //! `.filters`, `.marks` et documents de modification.
 //!
-//! Spécification : `docs/interop-formats.md`.
+//! Spécification : `docs/interop-formats.md`. Le format natif `.rcproj` (JSON)
+//! regroupe le projet, ses types et ses filtres : [`NativeProject`].
 
 pub mod ini;
 mod misc;
 mod rqtf;
 pub mod text;
 mod types;
+pub mod write;
 
 pub use misc::{parse_filters, parse_marks, parse_modifications};
 pub use rqtf::parse_project;
 pub use types::parse_types;
 
 use rc_model::{DocumentType, FilterSet, Mark, Project};
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+
+/// Projet au format natif `.rcproj` : un seul fichier JSON lisible et comparable.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct NativeProject {
+    /// Toujours `reqticraft-project`.
+    pub format: String,
+    pub version: u32,
+    pub project: Project,
+    /// Types propres au projet, prioritaires sur ceux des fichiers `.types`.
+    #[serde(default)]
+    pub types: Vec<DocumentType>,
+    #[serde(default)]
+    pub filters: FilterSet,
+}
+
+impl NativeProject {
+    pub const FORMAT: &'static str = "reqticraft-project";
+
+    pub fn new(project: Project, types: Vec<DocumentType>, filters: FilterSet) -> Self {
+        NativeProject {
+            format: Self::FORMAT.into(),
+            version: 1,
+            project,
+            types,
+            filters,
+        }
+    }
+
+    pub fn to_json(&self) -> String {
+        serde_json::to_string_pretty(self).expect("modèle sérialisable")
+            + "
+"
+    }
+
+    pub fn parse(text: &str) -> Result<Self, InteropError> {
+        let native: NativeProject = serde_json::from_str(text)
+            .map_err(|e| InteropError::Format(format!("projet natif : {e}")))?;
+        if native.format != Self::FORMAT {
+            return Err(InteropError::Format(format!(
+                "format `{}` inattendu (attendu : {})",
+                native.format,
+                Self::FORMAT
+            )));
+        }
+        Ok(native)
+    }
+}
+
+/// Indique si un chemin désigne un projet au format natif.
+pub fn is_native(path: &Path) -> bool {
+    path.extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("rcproj"))
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum InteropError {
@@ -132,10 +188,20 @@ pub fn load_project(
         .file_stem()
         .map(|s| s.to_string_lossy().into_owned())
         .unwrap_or_default();
-    let (project, mut warnings) = parse_project(&text, &name)?;
+    let (project, mut warnings, native) = if is_native(path) {
+        let mut native = NativeProject::parse(&text)?;
+        native.project.name = name.clone();
+        (native.project.clone(), Vec::new(), Some(native))
+    } else {
+        let (p, w) = parse_project(&text, &name)?;
+        (p, w, None)
+    };
     let dir = path.parent().map(Path::to_path_buf).unwrap_or_default();
 
     let mut types = TypeLibrary::default();
+    if let Some(n) = &native {
+        types.extend(n.types.iter().cloned());
+    }
     let (local, w) = load_types_dir(&dir, false);
     types.extend(local);
     warnings.extend(w);
@@ -153,20 +219,24 @@ pub fn load_project(
 
     // Tous les .filters du répertoire sont pris en compte ; seul celui du nom du
     // projet donne le filtre courant.
-    let mut filters = FilterSet::default();
+    let mut filters = native.map(|n| n.filters).unwrap_or_default();
     let mut filter_files = Vec::new();
     collect_files(&dir, "filters", false, &mut filter_files);
-    filter_files.sort();
+    // Le fichier du projet d'abord : il l'emporte sur un filtre homonyme d'un
+    // autre fichier (ReqtiCraft y enregistre tous les filtres).
+    let own = |f: &PathBuf| f.file_stem().is_some_and(|s| s.to_string_lossy() == name);
+    filter_files.sort_by_key(|f| (!own(f), f.clone()));
     for file in filter_files {
         match read_text(&file).and_then(|t| parse_filters(&t)) {
             Ok(set) => {
-                if file
-                    .file_stem()
-                    .is_some_and(|s| s.to_string_lossy() == name)
-                {
+                if own(&file) {
                     filters.current = set.current;
                 }
-                filters.filters.extend(set.filters);
+                for f in set.filters {
+                    if !filters.filters.iter().any(|x| x.name == f.name) {
+                        filters.filters.push(f);
+                    }
+                }
             }
             Err(e) => warnings.push(format!("{} : {e}", file.display())),
         }

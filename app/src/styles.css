@@ -629,3 +629,259 @@ select {
 .pane > .impact {
   padding-left: 12px;
 }
+
+/* ---------------------------------------------------------------- édition (M5) */
+
+.grow {
+  flex: 1;
+}
+
+.toolbar h1,
+.toolbar h2 {
+  margin: 0;
+}
+
+.projectbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.projectbar-name {
+  font-weight: 500;
+}
+
+.projectbar .badge {
+  margin-left: 0;
+}
+
+.button.small {
+  padding: 4px 10px;
+  font-size: 0.85rem;
+}
+
+.button.danger {
+  background: transparent;
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+.notice {
+  background: var(--info-soft);
+  color: var(--info);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.pre {
+  white-space: pre-wrap;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.form label.inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.form input,
+.form select,
+.form textarea {
+  color: var(--text);
+  font: inherit;
+}
+
+.form textarea {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.mono {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.element-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.element-card.condition {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.elements {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.roles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.actions.compact {
+  margin-top: 0;
+}
+
+.types-split {
+  grid-template-columns: minmax(240px, 320px) 1fr;
+}
+
+.type-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.type-list .tree {
+  overflow: auto;
+}
+
+.type-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.origin-modified,
+.origin-project {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.tester {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.test-tree {
+  max-height: 360px;
+  overflow: auto;
+  margin-bottom: 8px;
+}
+
+.test-tree .row {
+  cursor: default;
+  gap: 8px;
+}
+
+.test-tree .badge {
+  margin-left: 0;
+}
+
+.test-tree .class-text .row-name {
+  color: var(--muted);
+}
+
+.intermediate {
+  max-height: 320px;
+  overflow: auto;
+  padding: 12px;
+  background: var(--surface-2);
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.diagram {
+  width: 100%;
+  height: auto;
+  min-height: 320px;
+  max-height: 70vh;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  touch-action: none;
+  user-select: none;
+}
+
+.node {
+  cursor: grab;
+}
+
+.node rect {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 2;
+}
+
+.node.selected rect {
+  stroke: var(--accent);
+  fill: var(--accent-soft);
+}
+
+.node:focus-visible rect {
+  stroke: var(--accent);
+  stroke-dasharray: 4 3;
+}
+
+.node-name {
+  fill: var(--text);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.node-type {
+  fill: var(--muted);
+  font-size: 13px;
+}
+
+.channel-line {
+  stroke: var(--muted);
+}
+
+.arrow-head {
+  fill: var(--muted);
+}
+
+.channel-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}

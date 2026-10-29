@@ -7,8 +7,8 @@ ReqtiCraft capture les exigences et leurs références directement dans les docu
 la couverture et l'analyse d'impact, contrôle des règles de cohérence et produit des rapports. Il sait
 importer les projets Reqtify existants.
 
-> État : **interface de bureau v1** (M4) et connecteurs **P0, P1 et P2**. L'édition de projet, les
-> filtres, les instantanés et les rapports arrivent avec M5 et M6.
+> État : **application de bureau** avec édition de projet, de types et de filtres (M4 et M5), et
+> connecteurs **P0, P1 et P2**. Les instantanés et les rapports arrivent avec M6.
 >
 > - Documents : texte, Word docx, tableurs, PDF, code source, JSON, XML, HTML, Markdown, AsciiDoc,
 >   RTF, OpenDocument, PowerPoint, FrameMaker MIF, ReqIF, Visio, MS Project, UML/SysML (XMI),
@@ -81,6 +81,18 @@ L'application ouvre un projet `.rqtf` et affiche :
 
 Quand un document change sur le disque, un bandeau propose de recharger. Après le rechargement, les
 éléments nouveaux ou modifiés sont signalés.
+
+Elle permet aussi de modifier le projet :
+
+- **Projet** : diagramme des documents et des canaux, ajout et retrait de documents, type, chemin et
+  catégorie de chaque document ;
+- **Types** : duplication d'un type de la bibliothèque, édition de ses éléments (classe, expression,
+  sous-expression, rôle des groupes, parents) et **testeur** sur un fichier, avec l'intermédiaire ;
+- **Filtres** : conditions combinées en ET ou en OU, paramètres `$nom`, application à l'affichage
+  (masquage) ou à l'analyse (taux recalculés).
+
+Un projet s'enregistre en `.rqtf` (avec `<projet>.types` et `<projet>.filters`, lisibles par Reqtify)
+ou au format natif `.rcproj` (un seul fichier JSON).
 
 ```bash
 cd app && npm ci && npx tauri dev

@@ -24,9 +24,28 @@ export async function pickProject(): Promise<string | null> {
   const picked = await open({
     multiple: false,
     directory: false,
-    filters: [{ name: "Projet ReqtiCraft ou Reqtify", extensions: ["rqtf"] }],
+    filters: [{ name: "Projet ReqtiCraft ou Reqtify", extensions: ["rqtf", "rcproj"] }],
   });
   return typeof picked === "string" ? picked : null;
+}
+
+/** Fichier quelconque à tester (application de bureau seulement). */
+export async function pickFile(): Promise<string | null> {
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const picked = await open({ multiple: false, directory: false });
+  return typeof picked === "string" ? picked : null;
+}
+
+/** Emplacement d'enregistrement d'un projet (application de bureau seulement). */
+export async function pickSavePath(defaultPath?: string): Promise<string | null> {
+  const { save } = await import("@tauri-apps/plugin-dialog");
+  return save({
+    defaultPath,
+    filters: [
+      { name: "Projet compatible Reqtify", extensions: ["rqtf"] },
+      { name: "Projet ReqtiCraft natif", extensions: ["rcproj"] },
+    ],
+  });
 }
 
 export function errorText(e: unknown): string {
