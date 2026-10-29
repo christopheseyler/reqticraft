@@ -6,8 +6,9 @@
 mod output;
 
 use anyhow::{bail, Context, Result};
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use rc_core::rc_model::{DocumentType, Severity};
+use std::io::{IsTerminal, Write};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -88,7 +89,53 @@ fn parse_param(s: &str) -> Result<(String, String), String> {
 }
 
 fn main() -> ExitCode {
-    match run(Cli::parse()) {
+    let args: Vec<std::ffi::OsString> = std::env::args_os().collect();
+    // Lancé par un double-clic (sans argument) ou par un projet déposé sur
+    // l'exécutable : la console se refermerait aussitôt la sortie écrite.
+    let interactive = std::io::stdin().is_terminal() && std::io::stdout().is_terminal();
+    let code = match args.len() {
+        1 if interactive => {
+            println!("ReqtiCraft {}", env!("CARGO_PKG_VERSION"));
+            println!(
+                "Outil en ligne de commande : l'interface graphique n'est pas encore disponible.\n\
+                 Ouvrez un terminal (PowerShell ou cmd) dans ce répertoire et lancez par exemple :\n\
+                 \x20 reqticraft analyze projet.rqtf --details\n\
+                 Vous pouvez aussi déposer un projet .rqtf sur reqticraft.exe pour l'analyser.\n"
+            );
+            Cli::command().print_help().ok();
+            ExitCode::from(2)
+        }
+        2 if is_project(Path::new(&args[1])) => {
+            let cli = Cli {
+                config: Vec::new(),
+                command: Command::Analyze {
+                    project: PathBuf::from(&args[1]),
+                    json: None,
+                    details: true,
+                    fail_on: None,
+                },
+            };
+            execute(cli)
+        }
+        _ => return execute(Cli::parse()),
+    };
+    if interactive {
+        print!("\nAppuyez sur Entrée pour fermer.");
+        std::io::stdout().flush().ok();
+        std::io::stdin().read_line(&mut String::new()).ok();
+    }
+    code
+}
+
+fn is_project(path: &Path) -> bool {
+    path.is_file()
+        && path
+            .extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("rqtf"))
+}
+
+fn execute(cli: Cli) -> ExitCode {
+    match run(cli) {
         Ok(code) => code,
         Err(e) => {
             eprintln!("erreur : {e:#}");
