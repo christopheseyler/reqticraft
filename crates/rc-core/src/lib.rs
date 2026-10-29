@@ -125,7 +125,7 @@ fn flatten_into(
                 });
             }
             ProjectNode::SubProject { name, path } => {
-                let mut rqtf = loaded.dir.join(path);
+                let mut rqtf = loaded.dir.join(native(path));
                 if rqtf
                     .extension()
                     .is_some_and(|e| e.eq_ignore_ascii_case("rqtfimage"))
@@ -251,9 +251,19 @@ fn project_message(rule: &str, text: String) -> Message {
     }
 }
 
+/// Chemin d'un projet Reqtify adapté au système : les `\` des projets écrits
+/// sous Windows deviennent des `/` ailleurs.
+pub fn native(path: &Path) -> PathBuf {
+    if cfg!(windows) {
+        path.to_owned()
+    } else {
+        PathBuf::from(path.to_string_lossy().replace('\\', "/"))
+    }
+}
+
 /// Chemin du fichier ou répertoire d'un document.
 pub fn document_path(entry: &DocumentEntry) -> PathBuf {
-    let relative = entry.base_dir.join(&entry.decl.path);
+    let relative = entry.base_dir.join(native(&entry.decl.path));
     if relative.exists() {
         return relative;
     }
@@ -456,7 +466,7 @@ pub fn capture_document(entry: &DocumentEntry) -> CapturedDocument {
     captured.type_name = doc_type.name.clone();
 
     for m in &entry.decl.modification_docs {
-        let path = entry.base_dir.join(&m.path);
+        let path = entry.base_dir.join(native(&m.path));
         match rc_interop::read_text(&path).and_then(|t| rc_interop::parse_modifications(&t)) {
             Ok(mods) => apply_modifications(&mut captured, &mods),
             Err(e) => captured.messages.push(Message {

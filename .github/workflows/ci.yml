@@ -49,4 +49,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Aucun fichier Reqtify dans le dépôt
-        run: tools/check-clean-room.sh
+        run: bash tools/check-clean-room.sh
