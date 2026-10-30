@@ -1186,6 +1186,17 @@ select {
 
 .channel-line {
   stroke: var(--muted);
+  pointer-events: none;
+}
+
+.channel-hit {
+  stroke: transparent;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+.diagram.linking .channel-hit {
+  cursor: crosshair;
 }
 
 .junction {

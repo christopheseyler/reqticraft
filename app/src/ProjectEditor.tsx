@@ -72,9 +72,24 @@ function removeAt(p: Project, i: number): Project {
   return p;
 }
 
-/** Ajoute le canal « from couvre to » s'il n'existe pas déjà (from = to : lien vers soi-même). */
+/** Vrai si un canal dit déjà « from couvre to ». */
+function covers(p: Project, from: number, to: number): boolean {
+  return p.channels.some((c) => c.covered === to && c.covering.includes(from));
+}
+
+/** Un lien dans les deux sens (A couvre B et B couvre A) n'est pas permis. */
+function reverseOf(p: Project, from: number, to: number): string | null {
+  return from !== to && covers(p, to, from)
+    ? `« ${p.nodes[to].name} » couvre déjà « ${p.nodes[from].name} » : un lien dans les deux sens n'est pas permis.`
+    : null;
+}
+
+/**
+ * Ajoute le canal « from couvre to » s'il n'existe pas déjà (from = to : lien vers soi-même),
+ * sauf si le lien inverse existe.
+ */
 function addChannel(p: Project, from: number, to: number): Project {
-  if (!p.channels.some((c) => c.covered === to && c.covering.includes(from))) {
+  if (!covers(p, from, to) && !reverseOf(p, from, to)) {
     p.channels.push({ kind: "cover", covered: to, covering: [from], category: null } as Channel);
   }
   return p;
@@ -224,6 +239,8 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
   const [linking, setLinking] = useState<number | null | false>(false);
   const [changed, setChanged] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Lien refusé pendant la création, affiché dans la barre du diagramme.
+  const [refused, setRefused] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = () =>
@@ -247,6 +264,20 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
     window.addEventListener("keydown", cancel);
     return () => window.removeEventListener("keydown", cancel);
   }, [linking]);
+
+  // Suppr supprime le lien, le document ou le dossier sélectionné (hors champ de saisie).
+  useEffect(() => {
+    if (channel === null && selected === null) return;
+    const del = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (e.key !== "Delete" || t?.closest("input, textarea, select, [contenteditable]")) return;
+      e.preventDefault();
+      if (channel !== null) removeChannel(channel);
+      else if (selected !== null) confirmRemove(selected);
+    };
+    window.addEventListener("keydown", del);
+    return () => window.removeEventListener("keydown", del);
+  });
 
   const update = (f: (p: Project) => Project) => {
     setProject((p) => (p ? f(structuredClone(p)) : p));
@@ -274,16 +305,33 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
   // Mode lien : un clic sur le nœud couvrant, puis sur le nœud couvert.
   const linkTo = (i: number) => {
     if (linking === null) {
+      setRefused(null);
       setLinking(i);
     } else if (linking !== false) {
-      update((p) => addChannel(p, linking, i));
+      const why = reverseOf(project, linking, i);
+      setRefused(why);
+      if (!why) update((p) => addChannel(p, linking, i));
       setLinking(false);
     }
+  };
+
+  const removeChannel = (ci: number) => {
+    update((p) => {
+      p.channels.splice(ci, 1);
+      return p;
+    });
+    setChannel(null);
   };
 
   // Lien accroché au cercle d'un canal : le nœud rejoint ses couvrants (combinaison OU).
   const linkToChannel = (ci: number) => {
     if (linking === null || linking === false) return;
+    const why = reverseOf(project, linking, project.channels[ci].covered);
+    setRefused(why);
+    if (why) {
+      setLinking(false);
+      return;
+    }
     update((p) => {
       const c = p.channels[ci];
       if (!c.covering.includes(linking)) {
@@ -358,6 +406,14 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
     setSelected(null);
   };
 
+  const confirmRemove = (i: number) => {
+    const n = project.nodes[i];
+    const question = isFolder(n)
+      ? `Supprimer le dossier « ${n.name} » ? Son contenu remonte d'un niveau ; les liens vers le dossier sont supprimés.`
+      : `Supprimer « ${n.name} » ? Les liens qui le touchent sont supprimés.`;
+    if (window.confirm(question)) remove(i);
+  };
+
   const node = selected !== null ? project.nodes[selected] : undefined;
   return (
     <div className="split editor">
@@ -400,8 +456,12 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
               icon="link"
               label="Créer un lien de couverture"
               active={linking !== false}
-              onClick={() => setLinking(linking === false ? null : false)}
+              onClick={() => {
+                setRefused(null);
+                setLinking(linking === false ? null : false);
+              }}
             />
+            {linking === false && refused && <span className="diagram-hint error-text">{refused}</span>}
             {linking !== false && (
               <span className="diagram-hint">
                 {linking === null
@@ -488,13 +548,7 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
               index={channel}
               project={project}
               update={update}
-              onRemove={() => {
-                update((p) => {
-                  p.channels.splice(channel, 1);
-                  return p;
-                });
-                setChannel(null);
-              }}
+              onRemove={() => removeChannel(channel)}
             />
           ) : (
             <ChannelsForm project={project} update={update} />
@@ -789,15 +843,26 @@ function Diagram({
         <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" className="arrow-head" />
         </marker>
+        <marker id="arrow-selected" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" className="ghost-head" />
+        </marker>
         <marker id="arrow-ghost" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" className="ghost-head" />
         </marker>
       </defs>
       {drawn.map(({ ci, froms, j, b, combined, loop }) => {
+        // Un clic sur le trait sélectionne le lien (zone de clic élargie).
+        const pick = (e: React.PointerEvent) => {
+          if (linking !== false) return;
+          e.stopPropagation();
+          onSelectChannel(ci);
+        };
+        const marker = channel === ci ? "url(#arrow-selected)" : "url(#arrow)";
         if (loop) {
           return (
-            <g key={ci} className={`channel${channel === ci ? " selected" : ""}`}>
-              <path d={loop} className="channel-line" fill="none" strokeWidth={2 * box.k} markerEnd="url(#arrow)" />
+            <g key={ci} className={`channel${channel === ci ? " selected" : ""}`} onPointerDown={pick}>
+              <path d={loop} className="channel-hit" fill="none" strokeWidth={12 * box.k} />
+              <path d={loop} className="channel-line" fill="none" strokeWidth={2 * box.k} markerEnd={marker} />
             </g>
           );
         }
@@ -806,11 +871,17 @@ function Diagram({
         const dy = j.y - b.y;
         const t = Math.min(Math.abs((W / 2 + 4 * box.k) / (dx || 1e-6)), Math.abs((H / 2 + 4 * box.k) / (dy || 1e-6)), 1);
         return (
-          <g key={ci} className={`channel${combined ? " combined" : ""}${channel === ci ? " selected" : ""}`}>
+          <g key={ci} className={`channel${combined ? " combined" : ""}${channel === ci ? " selected" : ""}`} onPointerDown={pick}>
             {froms.map((f) => {
               const a = center(f);
-              return <line key={f} x1={a.x} y1={a.y} x2={j.x} y2={j.y} className="channel-line" strokeWidth={2 * box.k} />;
+              return (
+                <g key={f}>
+                  <line x1={a.x} y1={a.y} x2={j.x} y2={j.y} className="channel-hit" strokeWidth={12 * box.k} />
+                  <line x1={a.x} y1={a.y} x2={j.x} y2={j.y} className="channel-line" strokeWidth={2 * box.k} />
+                </g>
+              );
             })}
+            <line x1={j.x} y1={j.y} x2={b.x + dx * t} y2={b.y + dy * t} className="channel-hit" strokeWidth={12 * box.k} />
             <line
               x1={j.x}
               y1={j.y}
@@ -818,7 +889,7 @@ function Diagram({
               y2={b.y + dy * t}
               className="channel-line"
               strokeWidth={2 * box.k}
-              markerEnd="url(#arrow)"
+              markerEnd={marker}
             />
           </g>
         );
@@ -884,10 +955,8 @@ function Diagram({
             // En mode lien, le diagramme gère le clic.
             if (linking !== false) return;
             e.stopPropagation();
-            if (combined) {
-              onSelectChannel(ci);
-              drag.current = { ci };
-            }
+            onSelectChannel(ci);
+            if (combined) drag.current = { ci };
           }}
         />
       ))}
@@ -1095,10 +1164,12 @@ function ChannelForm({
   const c = project.channels[index];
   return (
     <div className="form">
-      <h2>Canal combiné</h2>
+      <h2>{c.covering.length > 1 ? "Canal combiné" : "Lien de couverture"}</h2>
       <p className="muted">
-        Une exigence de « {project.nodes[c.covered].name} » est couverte dès qu'un de ces nœuds la référence. Glissez le
-        cercle pour le déplacer ; pour ajouter un couvrant, créez un lien vers le cercle.
+        {c.covering.length > 1
+          ? `Une exigence de « ${project.nodes[c.covered].name} » est couverte dès qu'un de ces nœuds la référence. Glissez le cercle pour le déplacer. `
+          : ""}
+        Pour ajouter un couvrant, créez un lien vers le cercle. Suppr supprime le lien.
       </p>
       <h3>Couvrants ({c.covering.length})</h3>
       <ul className="plain channel-list">
@@ -1141,6 +1212,7 @@ function ChannelsForm({ project, update }: { project: Project; update: (f: (p: P
   const names = project.nodes.map((n) => n.name);
   const label = (i: number) => (isFolder(project.nodes[i]) ? `${names[i]} (dossier)` : names[i]);
   const add = () => update((p) => addChannel(p, covering, covered));
+  const why = reverseOf(project, covering, covered);
   const remove = (ci: number, k: number) =>
     update((p) => {
       const c = p.channels[ci];
@@ -1195,10 +1267,11 @@ function ChannelsForm({ project, update }: { project: Project; update: (f: (p: P
             </select>
           </label>
           <div className="actions">
-            <button className="button secondary" onClick={add} disabled={covering === covered}>
+            <button className="button secondary" onClick={add} disabled={covering === covered || why !== null}>
               Ajouter le canal
             </button>
           </div>
+          {why && <p className="error-text">{why}</p>}
         </>
       )}
     </div>
