@@ -1301,3 +1301,34 @@ select {
 .changed-text {
   color: var(--info);
 }
+
+.scripts-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dashboard-diagram {
+  margin-bottom: 20px;
+}
+
+.dashboard-diagram .diagram {
+  min-height: 200px;
+  max-height: 40vh;
+}
+
+.diagram.readonly .node,
+.diagram.readonly .junction {
+  cursor: default;
+}
+
+.diagram.readonly .channel-hit {
+  cursor: default;
+  pointer-events: none;
+}
+
+.diagram.readonly .node:not(.folder) {
+  cursor: pointer;
+}

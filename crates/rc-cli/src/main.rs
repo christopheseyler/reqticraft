@@ -48,6 +48,9 @@ enum Command {
         /// Modèle du rapport écrit par `--report`.
         #[arg(long, value_enum, default_value = "matrix")]
         template: ReportTemplate,
+        /// Exécute les scripts Python du projet (`scripts/*.py`) même s'il n'est pas approuvé.
+        #[arg(long)]
+        scripts: bool,
     },
     /// Génère un rapport.
     Report {
@@ -213,6 +216,7 @@ fn main() -> ExitCode {
                     fail_on: None,
                     report: None,
                     template: ReportTemplate::Matrix,
+                    scripts: false,
                 },
             };
             execute(cli)
@@ -260,9 +264,19 @@ fn run(cli: Cli) -> Result<ExitCode> {
             fail_on,
             report,
             template,
+            scripts,
         } => {
-            let run = rc_core::analyze_project(&project, &cli.config)
+            let mut run = rc_core::analyze_project(&project, &cli.config)
                 .with_context(|| format!("analyse de {}", project.display()))?;
+            let scripts = rc_core::apply_scripts(&mut run, scripts);
+            if scripts.ran {
+                println!(
+                    "Scripts : {} vérification(s), {} problème(s), {} erreur(s) ({} ms)",
+                    scripts.checks, scripts.problems, scripts.errors, scripts.duration_ms
+                );
+            } else if !scripts.scripts.is_empty() {
+                println!("Scripts non exécutés (projet non approuvé) : relancez avec --scripts.");
+            }
             print!("{}", output::analysis_report(&run, details));
             if let Some(path) = json {
                 let report = output::json_report(&run);

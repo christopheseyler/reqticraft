@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { call, desktop, errorText, pickProject, pickSavePath } from "./api";
 import { Details } from "./Details";
-import type { Impact as ImpactData, ImpactNode, Overview, Page, Problem, Selection, Severity } from "./types";
+import { ProjectOverview } from "./ProjectEditor";
+import type { Impact as ImpactData, ImpactNode, Overview, Page, Problem, ScriptsReport, Selection, Severity } from "./types";
 import { ChangeBadge, ElementLink, Meter, percent, SeverityBadge, StatusBadge } from "./ui";
 
 type SelectFn = (document: number, element: number) => void;
@@ -118,10 +119,12 @@ export function Home({
 
 export function Dashboard({
   overview,
+  version,
   onDocument,
   onProblems,
 }: {
   overview: Overview;
+  version: number;
   onDocument: (d: number) => void;
   onProblems: (severity: Severity) => void;
 }) {
@@ -130,6 +133,15 @@ export function Dashboard({
     <div className="page">
       <h1>{overview.name}</h1>
       <p className="muted path">{overview.path}</p>
+      <div className="dashboard-diagram">
+        <ProjectOverview
+          version={version}
+          onDocument={(name) => {
+            const d = docs.find((x) => x.name === name);
+            if (d) onDocument(d.index);
+          }}
+        />
+      </div>
       <div className="tiles">
         <Tile label="Documents" value={String(docs.length)} />
         <Tile label="Exigences" value={String(overview.requirements)} />
@@ -427,24 +439,64 @@ export function Problems({
   setSeverity,
   onSelect,
   version,
+  onChanged,
 }: {
   severity: Severity | "all";
   setSeverity: (s: Severity | "all") => void;
   onSelect: SelectFn;
   version: number;
+  onChanged: (o: Overview) => void;
 }) {
   const [items, setItems] = useState<Problem[]>([]);
   const [rule, setRule] = useState("");
+  const [scripts, setScripts] = useState<ScriptsReport | null>(null);
+  const [busy, setBusy] = useState(false);
   useEffect(() => {
     call<Problem[]>("problems", { severity: severity === "all" ? null : severity })
       .then(setItems)
       .catch(console.error);
   }, [severity, version]);
+  useEffect(() => {
+    call<ScriptsReport>("scripts").then(setScripts).catch(console.error);
+  }, [version]);
+  // Approuve le répertoire du projet : les scripts s'exécutent à chaque analyse.
+  const trust = async () => {
+    setBusy(true);
+    try {
+      onChanged(await call<Overview>("trustScripts"));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBusy(false);
+    }
+  };
   const rules = [...new Set(items.map((p) => p.rule))].sort();
   const shown = rule ? items.filter((p) => p.rule === rule) : items;
   return (
     <div className="page">
       <h1>Problèmes</h1>
+      {scripts && scripts.scripts.length > 0 && (
+        <div className="notice scripts-notice" role="status">
+          {scripts.ran ? (
+            <span>
+              Scripts Python ({scripts.scripts.join(", ")}) : {scripts.checks} vérification{scripts.checks > 1 ? "s" : ""},{" "}
+              {scripts.problems} problème{scripts.problems > 1 ? "s" : ""}
+              {scripts.errors > 0 && `, ${scripts.errors} erreur${scripts.errors > 1 ? "s" : ""} de script`} ({scripts.durationMs} ms).
+            </span>
+          ) : (
+            <>
+              <span>
+                Ce projet contient {scripts.scripts.length} script{scripts.scripts.length > 1 ? "s" : ""} Python (
+                {scripts.scripts.join(", ")}). Ils ne s'exécutent qu'une fois le projet approuvé : n'approuvez que des
+                scripts de confiance.
+              </span>
+              <button className="button" onClick={trust} disabled={busy}>
+                {busy ? "Exécution…" : "Approuver et exécuter"}
+              </button>
+            </>
+          )}
+        </div>
+      )}
       <div className="toolbar">
         <div className="segmented" role="group" aria-label="Sévérité">
           {(

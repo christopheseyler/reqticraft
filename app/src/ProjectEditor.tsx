@@ -654,6 +654,39 @@ function ProjectTree({
   );
 }
 
+/** Premier niveau du projet, en lecture seule (tableau de bord) ; un clic sur un document l'ouvre. */
+export function ProjectOverview({ version, onDocument }: { version: number; onDocument: (name: string) => void }) {
+  const [project, setProject] = useState<Project | null>(null);
+  useEffect(() => {
+    call<ProjectInfo>("project")
+      .then((i) => setProject(i.project))
+      .catch(console.error);
+  }, [version]);
+  if (!project || project.nodes.length === 0) return null;
+  const none = () => {};
+  return (
+    <Diagram
+      project={project}
+      level={null}
+      selected={null}
+      channel={null}
+      linking={false}
+      readOnly
+      onLink={none}
+      onLinkChannel={none}
+      onCancelLink={none}
+      onSelect={(i) => {
+        const n = i === null ? null : project.nodes[i];
+        if (n && isDocument(n)) onDocument(n.name);
+      }}
+      onSelectChannel={none}
+      onMoveChannel={none}
+      onOpen={none}
+      onMove={none}
+    />
+  );
+}
+
 function Diagram({
   project,
   level,
@@ -668,6 +701,7 @@ function Diagram({
   onMoveChannel,
   onOpen,
   onMove,
+  readOnly = false,
 }: {
   project: Project;
   level: number | null;
@@ -682,6 +716,8 @@ function Diagram({
   onMoveChannel: (ci: number, pos: [number, number]) => void;
   onOpen: (i: number) => void;
   onMove: (i: number, pos: [number, number]) => void;
+  /** Ni déplacement ni sélection de lien : seul le clic sur un nœud est transmis. */
+  readOnly?: boolean;
 }) {
   const svg = useRef<SVGSVGElement>(null);
   // Glissement d'un nœud (i) ou du cercle de jonction d'un canal (ci).
@@ -788,7 +824,7 @@ function Diagram({
   return (
     <svg
       ref={svg}
-      className={`diagram${linking !== false ? " linking" : ""}`}
+      className={`diagram${linking !== false ? " linking" : ""}${readOnly ? " readonly" : ""}`}
       viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`}
       role="img"
       aria-label="Diagramme du projet"
@@ -853,7 +889,7 @@ function Diagram({
       {drawn.map(({ ci, froms, j, b, combined, loop }) => {
         // Un clic sur le trait sélectionne le lien (zone de clic élargie).
         const pick = (e: React.PointerEvent) => {
-          if (linking !== false) return;
+          if (linking !== false || readOnly) return;
           e.stopPropagation();
           onSelectChannel(ci);
         };
@@ -917,7 +953,7 @@ function Diagram({
               // En mode lien, le diagramme gère le clic.
               if (linking !== false) return;
               const [mx, my] = toModel(e);
-              drag.current = { i, dx: mx - x, dy: my - y };
+              if (!readOnly) drag.current = { i, dx: mx - x, dy: my - y };
               onSelect(i);
             }}
           >
@@ -953,7 +989,7 @@ function Diagram({
           onPointerLeave={leaveTarget({ ci })}
           onPointerDown={(e) => {
             // En mode lien, le diagramme gère le clic.
-            if (linking !== false) return;
+            if (linking !== false || readOnly) return;
             e.stopPropagation();
             onSelectChannel(ci);
             if (combined) drag.current = { ci };

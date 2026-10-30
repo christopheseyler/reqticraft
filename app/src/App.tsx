@@ -224,6 +224,7 @@ export function App() {
         ) : view === "dashboard" ? (
           <Dashboard
             overview={overview}
+            version={version}
             onDocument={(d) => {
               setDocument(d);
               setView("coverage");
@@ -256,7 +257,7 @@ export function App() {
         ) : view === "reports" ? (
           <Reports overview={overview} />
         ) : (
-          <Problems severity={severity} setSeverity={setSeverity} onSelect={select} version={version} />
+          <Problems severity={severity} setSeverity={setSeverity} onSelect={select} version={version} onChanged={applied} />
         )}
       </main>
     </div>

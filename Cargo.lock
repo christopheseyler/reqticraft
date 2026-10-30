@@ -2978,6 +2978,7 @@ dependencies = [
  "rc-model",
  "rc-plugin",
  "rc-report",
+ "rc-script",
  "rc-snapshot",
  "serde",
  "serde_json",
@@ -3022,6 +3023,16 @@ dependencies = [
  "rust_xlsxwriter",
  "thiserror 2.0.21",
  "zip",
+]
+
+[[package]]
+name = "rc-script"
+version = "0.5.0"
+dependencies = [
+ "rc-analysis",
+ "rc-model",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

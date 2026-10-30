@@ -15,6 +15,7 @@ rc-interop.workspace = true
 rc-model.workspace = true
 rc-plugin.workspace = true
 rc-report.workspace = true
+rc-script.workspace = true
 rc-snapshot.workspace = true
 serde.workspace = true
 serde_json.workspace = true

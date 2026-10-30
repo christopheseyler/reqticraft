@@ -205,6 +205,8 @@ pub struct Session {
     leaves: Vec<HashSet<ElemId>>,
     /// Éléments masqués par le filtre d'affichage.
     hidden: HashSet<(usize, ElemId)>,
+    /// Scripts Python du projet et résultat de leur dernière exécution.
+    pub scripts: rc_script::Report,
 }
 
 impl Session {
@@ -221,10 +223,11 @@ impl Session {
     fn from_run(
         path: &Path,
         config_dirs: &[PathBuf],
-        run: ProjectRun,
+        mut run: ProjectRun,
         edit: Edit,
         previous: Option<&Fingerprints>,
     ) -> Session {
+        let scripts = crate::apply_scripts(&mut run, false);
         let mut stamps = vec![(path.to_owned(), stamp(path))];
         for entry in &run.flat.documents {
             let p = document_path(entry);
@@ -278,6 +281,7 @@ impl Session {
             down,
             leaves,
             hidden: HashSet::new(),
+            scripts,
         };
         session.compute_hidden();
         session
@@ -900,6 +904,12 @@ pub fn call(session: &mut Option<Session>, method: &str, args: &Value) -> Result
         "impact" => to_json(s.impact(arg(args, "document")?, arg(args, "element")?)?),
         "problems" => to_json(s.problems(arg(args, "severity")?)),
         "changes" => to_json(s.changed_files()),
+        "scripts" => to_json(&s.scripts),
+        "trustScripts" => {
+            rc_script::trust(&s.run.loaded.dir).map_err(|e| e.to_string())?;
+            s.refilter();
+            to_json(s.overview())
+        }
         "reload" => {
             s.reload()?;
             to_json(s.overview())

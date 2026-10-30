@@ -435,6 +435,40 @@ pub fn analyze_project(path: &Path, config_dirs: &[PathBuf]) -> Result<ProjectRu
     Ok(run_loaded(loaded, config_dirs, None))
 }
 
+/// Exécute les scripts Python du projet (`scripts/*.py`) et ajoute leurs
+/// messages à l'analyse. Ils ne s'exécutent que si le répertoire du projet est
+/// approuvé, ou avec `force` ; sinon un message `scriptsNotTrusted` les signale.
+pub fn apply_scripts(run: &mut ProjectRun, force: bool) -> rc_script::Report {
+    let dir = run.loaded.dir.clone();
+    let scripts = rc_script::discover(&dir);
+    let mut report = rc_script::Report::new(&scripts, rc_script::is_trusted(&dir));
+    if scripts.is_empty() {
+        return report;
+    }
+    if !(force || report.trusted) {
+        run.analysis.messages.push(Message {
+            severity: Severity::Information,
+            ..project_message(
+                "scriptsNotTrusted",
+                format!(
+                    "scripts non exécutés, projet non approuvé : {}",
+                    report.scripts.join(", ")
+                ),
+            )
+        });
+        return report;
+    }
+    let start = std::time::Instant::now();
+    let outcome = rc_script::run(&run.loaded.project.name, &dir, &run.analysis, &scripts);
+    report.ran = true;
+    report.checks = outcome.checks;
+    report.errors = outcome.errors();
+    report.problems = outcome.messages.len() - report.errors;
+    report.duration_ms = start.elapsed().as_millis() as u64;
+    run.analysis.messages.extend(outcome.messages);
+    report
+}
+
 /// Analyse un projet déjà chargé (éventuellement modifié en mémoire).
 pub fn run_loaded(
     loaded: LoadedProject,

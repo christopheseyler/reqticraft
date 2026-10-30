@@ -96,6 +96,17 @@ export interface Problem {
   line: number | null;
 }
 
+/** Scripts Python du projet (`scripts/*.py`) et dernière exécution. */
+export interface ScriptsReport {
+  scripts: string[];
+  trusted: boolean;
+  ran: boolean;
+  checks: number;
+  problems: number;
+  errors: number;
+  durationMs: number;
+}
+
 export interface Details {
   document: number;
   documentName: string;
