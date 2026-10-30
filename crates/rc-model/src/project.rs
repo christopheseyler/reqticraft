@@ -137,6 +137,10 @@ pub struct Channel {
     /// Documents couvrants (aval). Plus d'un élément : combinaison « OU ».
     pub covering: Vec<NodeId>,
     pub category: Option<String>,
+    /// Point de jonction dans le diagramme (`Cover@positionX/Y`), où se
+    /// rejoignent les documents couvrants d'une combinaison OU.
+    #[serde(default)]
+    pub position: Option<(i64, i64)>,
 }
 
 #[cfg(test)]
@@ -192,6 +196,7 @@ mod tests {
             covered: 0,
             covering: vec![1, 2],
             category: None,
+            position: Some((10, 20)),
         };
         let json = serde_json::to_string(&channel).unwrap();
         assert_eq!(serde_json::from_str::<Channel>(&json).unwrap(), channel);

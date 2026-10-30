@@ -34,6 +34,7 @@ export interface Channel {
   covered: number;
   covering: number[];
   category: string | null;
+  position?: [number, number] | null;
 }
 
 export interface Project {

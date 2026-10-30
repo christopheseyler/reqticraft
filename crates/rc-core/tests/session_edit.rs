@@ -51,6 +51,7 @@ fn p1_project_built_step_by_step() {
         covered: 0,
         covering: vec![1],
         category: None,
+        position: None,
     }];
     s.update_project(project.clone()).unwrap();
     let o = s.overview();
@@ -70,6 +71,7 @@ fn p1_project_built_step_by_step() {
         covered: 1,
         covering: vec![2],
         category: None,
+        position: None,
     });
     s.update_project(project).unwrap();
     s.save(None).unwrap();
@@ -117,12 +119,14 @@ fn folders_group_documents() {
             covered: 0,
             covering: vec![1],
             category: None,
+            position: None,
         },
         Channel {
             kind: ChannelKind::Cover,
             covered: 1,
             covering: vec![2],
             category: None,
+            position: None,
         },
     ];
     s.update_project(project.clone()).unwrap();

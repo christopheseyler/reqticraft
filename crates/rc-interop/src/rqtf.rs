@@ -25,6 +25,9 @@ pub fn parse_project(text: &str, name: &str) -> Result<(Project, Vec<String>), I
     Ok((project, warnings))
 }
 
+/// `Cover` lu : document couvert, documents couvrants, point de jonction.
+type CoverDecl = (String, Vec<String>, Option<(i64, i64)>);
+
 fn parse_xml(text: &str, warnings: &mut Vec<String>) -> Result<Project, InteropError> {
     let fixed = sanitize_xml(text);
     let doc = roxmltree::Document::parse(&fixed)?;
@@ -36,7 +39,7 @@ fn parse_xml(text: &str, warnings: &mut Vec<String>) -> Result<Project, InteropE
         )));
     }
     let mut project = Project::default();
-    let mut covers: Vec<(String, Vec<String>)> = Vec::new();
+    let mut covers: Vec<CoverDecl> = Vec::new();
 
     for node in root.children().filter(|n| n.is_element()) {
         match node.tag_name().name() {
@@ -50,6 +53,7 @@ fn parse_xml(text: &str, warnings: &mut Vec<String>) -> Result<Project, InteropE
                     .filter(|c| c.has_tag_name("InputDocument"))
                     .map(|c| attr(&c, "name"))
                     .collect(),
+                position(&node),
             )),
             "ReplacingPath" => {
                 let replacing = components(&node);
@@ -67,8 +71,8 @@ fn parse_xml(text: &str, warnings: &mut Vec<String>) -> Result<Project, InteropE
         }
     }
 
-    for (covered, covering) in covers {
-        push_channel(&mut project, &covered, &covering, warnings);
+    for (covered, covering, at) in covers {
+        push_channel(&mut project, &covered, &covering, at, warnings);
     }
     Ok(project)
 }
@@ -176,7 +180,7 @@ fn parse_ini(text: &str, warnings: &mut Vec<String>) -> Result<Project, InteropE
     for name in &names {
         let section = ini.section(name).expect("vérifié ci-dessus");
         for (_, covering) in section.numbered("Cover", "") {
-            push_channel(&mut project, name, &[covering.to_owned()], warnings);
+            push_channel(&mut project, name, &[covering.to_owned()], None, warnings);
         }
     }
     Ok(project)
@@ -186,6 +190,7 @@ fn push_channel(
     project: &mut Project,
     covered: &str,
     covering: &[String],
+    position: Option<(i64, i64)>,
     warnings: &mut Vec<String>,
 ) {
     let mut find = |name: &str| {
@@ -205,6 +210,7 @@ fn push_channel(
         covered,
         covering,
         category: None,
+        position,
     });
 }
 
@@ -307,6 +313,8 @@ mod tests {
             (p.channels[1].covered, p.channels[1].covering.clone()),
             (1, vec![1])
         );
+        // Point de jonction du canal.
+        assert_eq!(p.channels[0].position, Some((4820, 2920)));
     }
 
     const XML: &str = r#"<?xml version="1.0" encoding="UTF-8"?>

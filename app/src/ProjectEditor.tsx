@@ -72,11 +72,129 @@ function removeAt(p: Project, i: number): Project {
   return p;
 }
 
+/** Ajoute le canal « from couvre to » s'il n'existe pas déjà. */
+function addChannel(p: Project, from: number, to: number): Project {
+  if (from !== to && !p.channels.some((c) => c.covered === to && c.covering.includes(from))) {
+    p.channels.push({ kind: "cover", covered: to, covering: [from], category: null } as Channel);
+  }
+  return p;
+}
+
+/** Icônes de la barre d'outils du diagramme (trait, 20 × 20). */
+const ICONS = {
+  folder: (
+    <>
+      <path d="M2.5 5.5h5l1.5 2h8.5v8.5h-15z" />
+      <path d="M10 10v4M8 12h4" />
+    </>
+  ),
+  document: (
+    <>
+      <path d="M5 2.5h6.5l3.5 3.5v11.5h-10z" />
+      <path d="M11.5 2.5v3.5h3.5M10 9.5v5M7.5 12h5" />
+    </>
+  ),
+  link: (
+    <>
+      <rect x="2" y="12" width="6" height="5" rx="1" />
+      <rect x="12" y="3" width="6" height="5" rx="1" />
+      <path d="M6 12L14 8.5M14 8.5h-3.5M14 8.5l-1.5 3" />
+    </>
+  ),
+};
+
+function ToolButton({
+  icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: keyof typeof ICONS;
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button className={`icon-button${active ? " active" : ""}`} title={label} aria-label={label} aria-pressed={active} onClick={onClick}>
+      <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+        {ICONS[icon]}
+      </svg>
+    </button>
+  );
+}
+
 /** Range le nœud dans un dossier (null : au niveau du projet). */
 function moveTo(p: Project, i: number, target: number | null): Project {
   for (const n of p.nodes) if (isFolder(n)) n.children = n.children.filter((k) => k !== i);
   if (target !== null) (p.nodes[target] as FolderNode).children.push(i);
   return p;
+}
+
+/** Le nœud et, pour un dossier, tout ce qu'il contient. */
+function subtree(p: Project, i: number): Set<number> {
+  const out = new Set<number>();
+  const stack = [i];
+  while (stack.length && out.size <= p.nodes.length) {
+    const n = stack.pop()!;
+    if (out.has(n)) continue;
+    out.add(n);
+    const node = p.nodes[n];
+    if (isFolder(node)) stack.push(...node.children);
+  }
+  return out;
+}
+
+/**
+ * Déplace un nœud dans un autre dossier (null : niveau du projet). Les liens
+ * vers ce qui est déplacé disparaissent ; ceux internes à un dossier déplacé restent.
+ */
+function relocate(p: Project, i: number, target: number | null): Project {
+  const moved = subtree(p, i);
+  p.channels = p.channels.flatMap((c) => {
+    const inside = moved.has(c.covered);
+    if (inside && c.covering.every((k) => moved.has(k))) return [c];
+    if (inside) return [];
+    const covering = c.covering.filter((k) => !moved.has(k));
+    if (covering.length === 0) return [];
+    return [{ ...c, covering, position: covering.length > 1 ? c.position : null }];
+  });
+  return moveTo(p, i, target);
+}
+
+/** Hauteur de l'arbre du projet, gardée d'une visite à l'autre. */
+const TREE_KEY = "reqticraft.projectTreeHeight";
+function savedTreeHeight(): number {
+  try {
+    const v = Number(localStorage.getItem(TREE_KEY));
+    return v > 0 ? v : 240;
+  } catch {
+    return 240;
+  }
+}
+
+/** Séparateur horizontal entre l'arbre et le formulaire, à glisser ou au clavier. */
+function Splitter({ height, onResize }: { height: number; onResize: (h: number) => void }) {
+  const start = useRef<{ y: number; h: number } | null>(null);
+  return (
+    <div
+      className="splitter"
+      role="separator"
+      aria-orientation="horizontal"
+      aria-label="Redimensionner l'arbre du projet"
+      aria-valuenow={Math.round(height)}
+      tabIndex={0}
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        start.current = { y: e.clientY, h: height };
+      }}
+      onPointerMove={(e) => start.current && onResize(start.current.h + e.clientY - start.current.y)}
+      onPointerUp={() => (start.current = null)}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowUp") onResize(height - 20);
+        if (e.key === "ArrowDown") onResize(height + 20);
+      }}
+    />
+  );
 }
 
 // Dossier ouvert, retrouvé par son nom quand l'éditeur est recréé après « Appliquer ».
@@ -87,6 +205,23 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
   const [project, setProject] = useState<Project | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [level, setLevel] = useState<number | null>(null);
+  const [treeHeight, setTreeHeight] = useState(savedTreeHeight);
+  const side = useRef<HTMLElement>(null);
+  const resizeTree = (h: number) => {
+    // L'arbre et le formulaire gardent chacun au moins 80 px.
+    const max = (side.current?.clientHeight ?? 600) - 86;
+    const v = Math.round(Math.min(Math.max(h, 80), Math.max(max, 80)));
+    setTreeHeight(v);
+    try {
+      localStorage.setItem(TREE_KEY, String(v));
+    } catch {
+      // Stockage indisponible : la hauteur n'est pas gardée.
+    }
+  };
+  // Canal sélectionné par son cercle de jonction.
+  const [channel, setChannel] = useState<number | null>(null);
+  // Création d'un lien : false hors mode, null en attente du nœud couvrant.
+  const [linking, setLinking] = useState<number | null | false>(false);
   const [changed, setChanged] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -104,6 +239,14 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
   useEffect(() => {
     load();
   }, []);
+
+  // Échap annule la création d'un lien, quel que soit l'élément actif.
+  useEffect(() => {
+    if (linking === false) return;
+    const cancel = (e: KeyboardEvent) => e.key === "Escape" && setLinking(false);
+    window.addEventListener("keydown", cancel);
+    return () => window.removeEventListener("keydown", cancel);
+  }, [linking]);
 
   const update = (f: (p: Project) => Project) => {
     setProject((p) => (p ? f(structuredClone(p)) : p));
@@ -128,10 +271,43 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
     return <div className="page">{error ? <p className="error-text">{error}</p> : <p className="muted">Chargement…</p>}</div>;
   }
 
+  // Mode lien : un clic sur le nœud couvrant, puis sur le nœud couvert.
+  const linkTo = (i: number) => {
+    if (linking === null) {
+      setLinking(i);
+    } else if (linking !== false && linking !== i) {
+      update((p) => addChannel(p, linking, i));
+      setLinking(false);
+    }
+  };
+
+  // Lien accroché au cercle d'un canal : le nœud rejoint ses couvrants (combinaison OU).
+  const linkToChannel = (ci: number) => {
+    if (linking === null || linking === false) return;
+    update((p) => {
+      const c = p.channels[ci];
+      if (c.covered !== linking && !c.covering.includes(linking)) {
+        c.covering.push(linking);
+        // Le cercle se place au barycentre des couvrants, jusqu'à ce qu'on le déplace.
+        c.position = null;
+      }
+      return p;
+    });
+    setLinking(false);
+    setSelected(null);
+    setChannel(ci);
+  };
+
+  const selectNode = (i: number | null) => {
+    setSelected(i);
+    setChannel(null);
+  };
+
   const enter = (f: number | null) => {
     openFolder = f === null ? null : project.nodes[f].name;
     setLevel(f);
     setSelected(null);
+    setChannel(null);
   };
 
   // Nouveau nœud placé à droite des nœuds du niveau affiché.
@@ -188,12 +364,6 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
       <div className="pane">
         <div className="toolbar">
           <h1 className="grow">Projet</h1>
-          <button className="button secondary" onClick={addFolder}>
-            Ajouter un dossier
-          </button>
-          <button className="button secondary" onClick={addDocument}>
-            Ajouter un document
-          </button>
           <button className="button" onClick={apply} disabled={!changed || busy}>
             {busy ? "Analyse…" : "Appliquer"}
           </button>
@@ -222,46 +392,209 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
           couvrant au nœud couvert ; un canal vers un dossier vaut pour tous ses documents.
           {changed && " Modifications non appliquées."}
         </p>
-        <Diagram
-          project={project}
-          level={level}
-          selected={selected}
-          onSelect={setSelected}
-          onOpen={enter}
-          onMove={(i, pos) =>
-            update((p) => {
-              const n = p.nodes[i];
-              if (isDocument(n) || isFolder(n)) n.position = pos;
-              return p;
-            })
-          }
-        />
+        <div className="diagram-frame">
+          <div className="diagram-tools" role="toolbar" aria-label="Outils du diagramme">
+            <ToolButton icon="folder" label="Ajouter un dossier" onClick={addFolder} />
+            <ToolButton icon="document" label="Ajouter un document" onClick={addDocument} />
+            <ToolButton
+              icon="link"
+              label="Créer un lien de couverture"
+              active={linking !== false}
+              onClick={() => setLinking(linking === false ? null : false)}
+            />
+            {linking !== false && (
+              <span className="diagram-hint">
+                {linking === null
+                  ? "Cliquez sur le nœud couvrant (bas niveau)…"
+                  : `${project.nodes[linking].name} couvre… cliquez sur le nœud couvert.`}{" "}
+                Échap pour annuler.
+              </span>
+            )}
+          </div>
+          <Diagram
+            project={project}
+            level={level}
+            selected={selected}
+            channel={channel}
+            linking={linking}
+            onLink={linkTo}
+            onLinkChannel={linkToChannel}
+            onSelect={selectNode}
+            onSelectChannel={(ci) => {
+              setChannel(ci);
+              setSelected(null);
+            }}
+            onMoveChannel={(ci, pos) =>
+              update((p) => {
+                p.channels[ci].position = pos;
+                return p;
+              })
+            }
+            onOpen={enter}
+            onMove={(i, pos) =>
+              update((p) => {
+                const n = p.nodes[i];
+                if (isDocument(n) || isFolder(n)) n.position = pos;
+                return p;
+              })
+            }
+          />
+        </div>
       </div>
-      <aside className="details">
-        {selected !== null && node && isDocument(node) ? (
-          <DocumentForm
-            key={selected}
-            node={node}
-            index={selected}
+      <aside className="details editor-side" ref={side}>
+        <section className="side-tree" aria-label="Arbre du projet" style={{ height: treeHeight }}>
+          <ProjectTree
             project={project}
-            types={info.types.map((t) => t.name)}
-            update={update}
-            onRemove={() => remove(selected)}
+            selected={selected}
+            onSelect={(i) => {
+              // Affiche le niveau du nœud dans le diagramme.
+              const up = parentOf(project, i);
+              if (up !== level) {
+                openFolder = up === null ? null : project.nodes[up].name;
+                setLevel(up);
+              }
+              selectNode(i);
+            }}
+            onOpen={enter}
+            onMove={(i, target) => update((p) => relocate(p, i, target))}
           />
-        ) : selected !== null && node && isFolder(node) ? (
-          <FolderForm
-            key={selected}
-            node={node}
-            index={selected}
-            update={update}
-            onOpen={() => enter(selected)}
-            onRemove={() => remove(selected)}
-            project={project}
-          />
-        ) : (
-          <ChannelsForm project={project} update={update} />
-        )}
+        </section>
+        <Splitter height={treeHeight} onResize={resizeTree} />
+        <div className="side-form">
+          {selected !== null && node && isDocument(node) ? (
+            <DocumentForm
+              key={selected}
+              node={node}
+              index={selected}
+              project={project}
+              types={info.types.map((t) => t.name)}
+              update={update}
+              onRemove={() => remove(selected)}
+            />
+          ) : selected !== null && node && isFolder(node) ? (
+            <FolderForm
+              key={selected}
+              node={node}
+              index={selected}
+              update={update}
+              onOpen={() => enter(selected)}
+              onRemove={() => remove(selected)}
+              project={project}
+            />
+          ) : channel !== null && project.channels[channel] ? (
+            <ChannelForm
+              key={channel}
+              index={channel}
+              project={project}
+              update={update}
+              onRemove={() => {
+                update((p) => {
+                  p.channels.splice(channel, 1);
+                  return p;
+                });
+                setChannel(null);
+              }}
+            />
+          ) : (
+            <ChannelsForm project={project} update={update} />
+          )}
+        </div>
       </aside>
+    </div>
+  );
+}
+
+/** Arbre du projet : dossiers et documents, avec glisser-déposer entre dossiers. */
+function ProjectTree({
+  project,
+  selected,
+  onSelect,
+  onOpen,
+  onMove,
+}: {
+  project: Project;
+  selected: number | null;
+  onSelect: (i: number) => void;
+  onOpen: (i: number) => void;
+  onMove: (i: number, target: number | null) => void;
+}) {
+  const [dragged, setDragged] = useState<number | null>(null);
+  const [over, setOver] = useState<number | "root" | null>(null);
+  const roots = project.nodes.flatMap((_, i) => (parentOf(project, i) === null ? [i] : []));
+
+  // Cible valide : un dossier hors de ce qui est déplacé, différent du dossier actuel.
+  const accepts = (target: number | null) =>
+    dragged !== null &&
+    parentOf(project, dragged) !== target &&
+    (target === null || !subtree(project, dragged).has(target));
+
+  const dropProps = (target: number | null) => ({
+    onDragOver: (e: React.DragEvent) => {
+      if (!accepts(target)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setOver(target ?? "root");
+    },
+    onDragLeave: () => setOver((o) => (o === (target ?? "root") ? null : o)),
+    onDrop: (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (dragged !== null && accepts(target)) onMove(dragged, target);
+      setDragged(null);
+      setOver(null);
+    },
+  });
+
+  const item = (i: number, depth: number): React.ReactNode => {
+    const n = project.nodes[i];
+    const folder = isFolder(n);
+    return (
+      <li key={i}>
+        <div
+          className={`tree-item${selected === i ? " selected" : ""}${over === i ? " drop" : ""}`}
+          style={{ paddingLeft: 8 + depth * 16 }}
+          draggable
+          role="treeitem"
+          aria-selected={selected === i}
+          tabIndex={0}
+          onDragStart={(e) => {
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", n.name);
+            setDragged(i);
+          }}
+          onDragEnd={() => {
+            setDragged(null);
+            setOver(null);
+          }}
+          onClick={() => onSelect(i)}
+          onDoubleClick={() => folder && onOpen(i)}
+          onKeyDown={(e) => e.key === "Enter" && onSelect(i)}
+          {...(folder ? dropProps(i) : {})}
+        >
+          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" className="tree-icon">
+            {folder ? <path d="M2.5 5.5h5l1.5 2h8.5v8.5h-15z" /> : <path d="M5 2.5h6.5l3.5 3.5v11.5h-10zM11.5 2.5v3.5h3.5" />}
+          </svg>
+          <span className="tree-name">{n.name}</span>
+          {isDocument(n) && <span className="muted tree-type">{n.doc_type}</span>}
+        </div>
+        {folder && n.children.length > 0 && <ul role="group">{n.children.map((k) => item(k, depth + 1))}</ul>}
+      </li>
+    );
+  };
+
+  return (
+    <div className="project-tree">
+      <div className={`tree-root${over === "root" ? " drop" : ""}`} {...dropProps(null)}>
+        {project.name || "Projet"}
+      </div>
+      {roots.length === 0 ? (
+        <p className="muted">Projet vide.</p>
+      ) : (
+        <ul role="tree" aria-label="Arbre du projet">
+          {roots.map((i) => item(i, 0))}
+        </ul>
+      )}
+      <p className="muted tree-help">Glissez un document ou un dossier sur un dossier, ou sur le nom du projet.</p>
     </div>
   );
 }
@@ -270,19 +603,32 @@ function Diagram({
   project,
   level,
   selected,
+  channel,
+  linking,
+  onLink,
+  onLinkChannel,
   onSelect,
+  onSelectChannel,
+  onMoveChannel,
   onOpen,
   onMove,
 }: {
   project: Project;
   level: number | null;
   selected: number | null;
+  channel: number | null;
+  linking: number | null | false;
+  onLink: (i: number) => void;
+  onLinkChannel: (ci: number) => void;
   onSelect: (i: number | null) => void;
+  onSelectChannel: (ci: number) => void;
+  onMoveChannel: (ci: number, pos: [number, number]) => void;
   onOpen: (i: number) => void;
   onMove: (i: number, pos: [number, number]) => void;
 }) {
   const svg = useRef<SVGSVGElement>(null);
-  const drag = useRef<{ i: number; dx: number; dy: number } | null>(null);
+  // Glissement d'un nœud (i) ou du cercle de jonction d'un canal (ci).
+  const drag = useRef<{ i: number; dx: number; dy: number } | { ci: number } | null>(null);
 
   const shown = project.nodes.flatMap((_, i) => (parentOf(project, i) === level ? [i] : []));
 
@@ -312,14 +658,30 @@ function Diagram({
 
   // Canaux vus à ce niveau : un nœud rangé dans un dossier est représenté par
   // le dossier ; les canaux internes à un dossier fermé ne sont pas tracés.
-  const lines = new Map<string, [number, number]>();
-  for (const c of project.channels) {
+  // Chaque canal passe par un cercle de jonction : au milieu de la flèche pour
+  // un canal simple, à la position enregistrée (ou au barycentre) pour une
+  // combinaison OU de plusieurs couvrants.
+  const center = (i: number) => {
+    const [x, y] = pos(i);
+    return { x: x + W / 2, y: y + H / 2 };
+  };
+  const drawn = project.channels.flatMap((c, ci) => {
     const to = proxy(project, c.covered, level);
-    for (const k of c.covering) {
-      const from = proxy(project, k, level);
-      if (from !== null && to !== null && from !== to) lines.set(`${from}-${to}`, [from, to]);
-    }
-  }
+    const froms = [...new Set(c.covering.map((k) => proxy(project, k, level)))].filter(
+      (f): f is number => f !== null && f !== to,
+    );
+    if (to === null || froms.length === 0) return [];
+    const combined = c.covering.length > 1;
+    const direct = to === c.covered && c.covering.every((k) => proxy(project, k, level) === k);
+    const b = center(to);
+    const fx = froms.reduce((s, f) => s + center(f).x, 0) / froms.length;
+    const fy = froms.reduce((s, f) => s + center(f).y, 0) / froms.length;
+    const j =
+      combined && direct && c.position
+        ? { x: c.position[0], y: c.position[1] }
+        : { x: (fx + b.x) / 2, y: (fy + b.y) / 2 };
+    return [{ ci, to, froms, combined, j, b }];
+  });
 
   const toModel = (e: React.PointerEvent) => {
     const r = svg.current!.getBoundingClientRect();
@@ -329,14 +691,16 @@ function Diagram({
   return (
     <svg
       ref={svg}
-      className="diagram"
+      className={`diagram${linking !== false ? " linking" : ""}`}
       viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`}
       role="img"
       aria-label="Diagramme du projet"
       onPointerMove={(e) => {
-        if (!drag.current) return;
+        const d = drag.current;
+        if (!d) return;
         const [x, y] = toModel(e);
-        onMove(drag.current.i, [Math.round(x - drag.current.dx), Math.round(y - drag.current.dy)]);
+        if ("ci" in d) onMoveChannel(d.ci, [Math.round(x), Math.round(y)]);
+        else onMove(d.i, [Math.round(x - d.dx), Math.round(y - d.dy)]);
       }}
       onPointerUp={() => (drag.current = null)}
       onPointerLeave={() => (drag.current = null)}
@@ -347,26 +711,27 @@ function Diagram({
           <path d="M0,0 L10,5 L0,10 z" className="arrow-head" />
         </marker>
       </defs>
-      {[...lines].map(([key, [from, to]]) => {
-        const [x1, y1] = pos(from);
-        const [x2, y2] = pos(to);
-        const a = { x: x1 + W / 2, y: y1 + H / 2 };
-        const b = { x: x2 + W / 2, y: y2 + H / 2 };
-        // Arrêt au bord du rectangle couvert.
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
+      {drawn.map(({ ci, froms, j, b, combined }) => {
+        // Arrêt de la flèche au bord du rectangle couvert.
+        const dx = j.x - b.x;
+        const dy = j.y - b.y;
         const t = Math.min(Math.abs((W / 2 + 4 * box.k) / (dx || 1e-6)), Math.abs((H / 2 + 4 * box.k) / (dy || 1e-6)), 1);
         return (
-          <line
-            key={key}
-            x1={a.x}
-            y1={a.y}
-            x2={b.x + dx * t}
-            y2={b.y + dy * t}
-            className="channel-line"
-            strokeWidth={2 * box.k}
-            markerEnd="url(#arrow)"
-          />
+          <g key={ci} className={`channel${combined ? " combined" : ""}${channel === ci ? " selected" : ""}`}>
+            {froms.map((f) => {
+              const a = center(f);
+              return <line key={f} x1={a.x} y1={a.y} x2={j.x} y2={j.y} className="channel-line" strokeWidth={2 * box.k} />;
+            })}
+            <line
+              x1={j.x}
+              y1={j.y}
+              x2={b.x + dx * t}
+              y2={b.y + dy * t}
+              className="channel-line"
+              strokeWidth={2 * box.k}
+              markerEnd="url(#arrow)"
+            />
+          </g>
         );
       })}
       {shown.map((i) => {
@@ -376,14 +741,18 @@ function Diagram({
         return (
           <g
             key={i}
-            className={`node${folder ? " folder" : ""}${selected === i ? " selected" : ""}`}
+            className={`node${folder ? " folder" : ""}${selected === i ? " selected" : ""}${linking === i ? " link-from" : ""}`}
             transform={`translate(${x} ${y}) scale(${box.k})`}
             tabIndex={0}
             role="button"
             aria-label={folder ? `Dossier ${n.name}` : n.name}
             onKeyDown={(e) => e.key === "Enter" && (folder ? onOpen(i) : onSelect(i))}
-            onDoubleClick={() => folder && onOpen(i)}
+            onDoubleClick={() => folder && linking === false && onOpen(i)}
             onPointerDown={(e) => {
+              if (linking !== false) {
+                onLink(i);
+                return;
+              }
               const [mx, my] = toModel(e);
               drag.current = { i, dx: mx - x, dy: my - y };
               onSelect(i);
@@ -404,6 +773,27 @@ function Diagram({
           </g>
         );
       })}
+      {drawn.map(({ ci, j, combined, froms, to }) => (
+        <circle
+          key={`j${ci}`}
+          cx={j.x}
+          cy={j.y}
+          r={(combined ? 7 : 5) * box.k}
+          strokeWidth={2 * box.k}
+          className={`junction${combined ? " combined" : ""}${channel === ci ? " selected" : ""}`}
+          role="button"
+          aria-label={`Canal ${froms.map((f) => project.nodes[f].name).join(" OU ")} → ${project.nodes[to].name}`}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            if (linking !== false) {
+              onLinkChannel(ci);
+            } else if (combined) {
+              onSelectChannel(ci);
+              drag.current = { ci };
+            }
+          }}
+        />
+      ))}
       {shown.length === 0 && (
         <text x={box.x + 40} y={box.y + 60} className="node-type">
           Dossier vide : ajoutez un document ou un dossier.
@@ -432,7 +822,7 @@ function FolderSelect({
       Dossier
       <select
         value={current ?? ""}
-        onChange={(e) => update((p) => moveTo(p, index, e.target.value === "" ? null : Number(e.target.value)))}
+        onChange={(e) => update((p) => relocate(p, index, e.target.value === "" ? null : Number(e.target.value)))}
       >
         <option value="">(aucun : niveau du projet)</option>
         {folders.map((f) => (
@@ -581,6 +971,58 @@ function FolderForm({
   );
 }
 
+function ChannelForm({
+  index,
+  project,
+  update,
+  onRemove,
+}: {
+  index: number;
+  project: Project;
+  update: (f: (p: Project) => Project) => void;
+  onRemove: () => void;
+}) {
+  const c = project.channels[index];
+  return (
+    <div className="form">
+      <h2>Canal combiné</h2>
+      <p className="muted">
+        Une exigence de « {project.nodes[c.covered].name} » est couverte dès qu'un de ces nœuds la référence. Glissez le
+        cercle pour le déplacer ; pour ajouter un couvrant, créez un lien vers le cercle.
+      </p>
+      <h3>Couvrants ({c.covering.length})</h3>
+      <ul className="plain channel-list">
+        {c.covering.map((k) => (
+          <li key={k}>
+            <span>{project.nodes[k].name}</span>
+            <button
+              className="link"
+              onClick={() =>
+                update((p) => {
+                  const ch = p.channels[index];
+                  ch.covering = ch.covering.filter((x) => x !== k);
+                  if (ch.covering.length < 2) ch.position = null;
+                  return p;
+                })
+              }
+              disabled={c.covering.length < 2}
+            >
+              Retirer
+            </button>
+          </li>
+        ))}
+      </ul>
+      <h3>Couvert</h3>
+      <p>{project.nodes[c.covered].name}</p>
+      <div className="actions">
+        <button className="button danger" onClick={onRemove}>
+          Supprimer le canal
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ChannelsForm({ project, update }: { project: Project; update: (f: (p: Project) => Project) => void }) {
   // Les canaux relient des documents ou des dossiers, où qu'ils soient rangés.
   const docs = project.nodes.flatMap((n, i) => (isDocument(n) || isFolder(n) ? [i] : []));
@@ -588,16 +1030,7 @@ function ChannelsForm({ project, update }: { project: Project; update: (f: (p: P
   const [covered, setCovered] = useState(docs[1] ?? 0);
   const names = project.nodes.map((n) => n.name);
   const label = (i: number) => (isFolder(project.nodes[i]) ? `${names[i]} (dossier)` : names[i]);
-  const add = () =>
-    update((p) => {
-      const existing = p.channels.find((c) => c.covered === covered && c.kind === "cover");
-      if (existing) {
-        if (!existing.covering.includes(covering)) existing.covering.push(covering);
-      } else {
-        p.channels.push({ kind: "cover", covered, covering: [covering], category: null } as Channel);
-      }
-      return p;
-    });
+  const add = () => update((p) => addChannel(p, covering, covered));
   const remove = (ci: number, k: number) =>
     update((p) => {
       const c = p.channels[ci];

@@ -142,6 +142,10 @@ pub fn project_xml(project: &Project) -> String {
     for c in &project.channels {
         out.push_str("<Cover");
         attr(&mut out, "outputDocument", project.nodes[c.covered].name());
+        if let Some((x, y)) = c.position {
+            attr(&mut out, "positionX", &x.to_string());
+            attr(&mut out, "positionY", &y.to_string());
+        }
         out.push_str(">\n");
         for &k in &c.covering {
             out.push_str("<InputDocument");
@@ -412,6 +416,7 @@ mod tests {
                 covered: 0,
                 covering: vec![1],
                 category: None,
+                position: None,
             }],
             path_replacements: Vec::new(),
         };
@@ -456,6 +461,7 @@ mod tests {
                 covered: 0,
                 covering: vec![2],
                 category: None,
+                position: None,
             }],
             ..Default::default()
         };

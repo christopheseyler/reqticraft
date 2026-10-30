@@ -924,6 +924,171 @@ select {
   font-size: 0.8rem;
 }
 
+.details.editor-side {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.side-tree {
+  flex: 0 0 auto;
+  min-height: 80px;
+  overflow: auto;
+  padding: 12px 16px;
+  background: var(--surface-2);
+}
+
+.splitter {
+  flex: 0 0 6px;
+  cursor: row-resize;
+  background: var(--border);
+  border-top: 2px solid var(--surface);
+  border-bottom: 2px solid var(--surface);
+  touch-action: none;
+}
+
+.splitter:hover,
+.splitter:focus-visible {
+  background: var(--accent);
+  outline: none;
+}
+
+.side-form {
+  flex: 1 1 0;
+  min-height: 80px;
+  overflow: auto;
+  padding: 16px 24px;
+}
+
+.project-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree-root {
+  font-weight: 600;
+  padding: 4px 8px;
+  border: 1px dashed transparent;
+  border-radius: 4px;
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-right: 8px;
+  border: 1px dashed transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tree-item:hover {
+  background: var(--surface);
+}
+
+.tree-item.selected {
+  background: var(--accent-soft);
+}
+
+.tree-item.drop,
+.tree-root.drop {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.tree-icon {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.tree-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-type {
+  margin-left: auto;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.tree-help {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+}
+
+.diagram-tools {
+  display: flex;
+  width: fit-content;
+  margin-bottom: 6px;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.icon-button svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-button:hover {
+  background: var(--surface-2);
+}
+
+.icon-button.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.icon-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.diagram-hint {
+  padding: 0 8px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.diagram.linking .node {
+  cursor: crosshair;
+}
+
+.node.link-from rect {
+  stroke: var(--accent);
+  stroke-dasharray: 6 3;
+}
+
 .diagram {
   width: 100%;
   height: auto;
@@ -1001,6 +1166,30 @@ select {
 
 .channel-line {
   stroke: var(--muted);
+}
+
+.junction {
+  fill: var(--surface);
+  stroke: var(--muted);
+}
+
+.diagram.linking .junction {
+  cursor: crosshair;
+  stroke: var(--accent);
+}
+
+.junction.combined {
+  fill: var(--surface-2);
+  cursor: move;
+}
+
+.junction.selected,
+.channel.selected .channel-line {
+  stroke: var(--accent);
+}
+
+.junction.selected {
+  fill: var(--accent-soft);
 }
 
 .arrow-head {
