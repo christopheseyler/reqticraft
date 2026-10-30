@@ -389,8 +389,9 @@ unique (`NativeProject` : projet, types propres, filtres). Les filtres sont éva
 `rc-analysis::filter` ; en analyse, les éléments filtrés sont neutralisés puis l'analyse est refaite.
 Écarts : les identifiants d'opérateurs autres que `equal`, `isPresent` et `isAbsent` (seuls observés,
 `interop-formats.md` §6) sont propres à ReqtiCraft ; les 16 `Booleans` des filtres INI ne sont pas
-réécrits ; le diagramme est un SVG maison (pas de React Flow) ; les dossiers de projet, sans forme XML
-observée, ne sont pas créés par l'éditeur.
+réécrits ; le diagramme est un SVG maison (pas de React Flow) ; les dossiers (*folders*) de projet se créent
+dans l'éditeur, s'ouvrent et s'imbriquent ; ils sont lus et écrits dans le `.rqtf` (`interop-formats.md`
+§2.3) et dans le `.rcproj`, et un canal qui vise un dossier vaut pour tous ses documents.
 
 **Connecteurs P1 et P2.**
 

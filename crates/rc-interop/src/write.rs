@@ -38,6 +38,84 @@ fn opt(out: &mut String, name: &str, value: Option<&str>) {
     }
 }
 
+fn node_xml(out: &mut String, project: &Project, n: usize, depth: usize) {
+    match &project.nodes[n] {
+        ProjectNode::Document(d) => {
+            out.push_str("<Document");
+            attr(out, "name", &d.name);
+            let (x, y) = d.position.unwrap_or((0, 0));
+            attr(out, "positionX", &x.to_string());
+            attr(out, "positionY", &y.to_string());
+            attr(out, "type", &d.doc_type);
+            attr(out, "path", &d.path.to_string_lossy());
+            opt(
+                out,
+                "absolutePath",
+                d.absolute_path.as_deref().map(|p| p.to_str().unwrap_or("")),
+            );
+            opt(out, "category", d.category.as_deref());
+            out.push_str(">\n");
+            for (k, v) in &d.params {
+                out.push_str("<Property");
+                attr(out, "name", k);
+                attr(out, "value", v);
+                out.push_str(" />\n");
+            }
+            for m in &d.modification_docs {
+                out.push_str("<ModificationDocument");
+                attr(out, "type", &m.doc_type);
+                attr(out, "path", &m.path.to_string_lossy());
+                out.push_str(" />\n");
+            }
+            for t in &d.ignored_types {
+                out.push_str("<IgnoredType");
+                attr(out, "name", t);
+                out.push_str(" />\n");
+            }
+            out.push_str("</Document>\n");
+        }
+        ProjectNode::SubProject { name, path } => {
+            out.push_str("<ProjectReference");
+            attr(out, "name", name);
+            attr(out, "type", "_ProjectReference");
+            attr(out, "path", &path.to_string_lossy());
+            out.push_str(" />\n");
+        }
+        ProjectNode::Folder {
+            name,
+            children,
+            position,
+            size,
+            category,
+            ..
+        } => {
+            out.push_str("<Folder");
+            attr(out, "name", name);
+            opt(out, "category", category.as_deref());
+            let (x, y) = position.unwrap_or((0, 0));
+            attr(out, "positionX", &x.to_string());
+            attr(out, "positionY", &y.to_string());
+            let (w, h) = size.unwrap_or((1000, 500));
+            attr(out, "positionW", &w.to_string());
+            attr(out, "positionH", &h.to_string());
+            out.push_str(
+                ">
+",
+            );
+            // Garde-fou contre un dossier qui se contiendrait lui-même.
+            if depth < project.nodes.len() {
+                for &c in children {
+                    node_xml(out, project, c, depth + 1);
+                }
+            }
+            out.push_str(
+                "</Folder>
+",
+            );
+        }
+    }
+}
+
 /// Projet `.rqtf` (format XML).
 pub fn project_xml(project: &Project) -> String {
     let mut out = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Project>\n");
@@ -47,52 +125,18 @@ pub fn project_xml(project: &Project) -> String {
         attr(&mut out, "value", v);
         out.push_str(" />\n");
     }
-    for node in &project.nodes {
-        match node {
-            ProjectNode::Document(d) => {
-                out.push_str("<Document");
-                attr(&mut out, "name", &d.name);
-                let (x, y) = d.position.unwrap_or((0, 0));
-                attr(&mut out, "positionX", &x.to_string());
-                attr(&mut out, "positionY", &y.to_string());
-                attr(&mut out, "type", &d.doc_type);
-                attr(&mut out, "path", &d.path.to_string_lossy());
-                opt(
-                    &mut out,
-                    "absolutePath",
-                    d.absolute_path.as_deref().map(|p| p.to_str().unwrap_or("")),
-                );
-                opt(&mut out, "category", d.category.as_deref());
-                out.push_str(">\n");
-                for (k, v) in &d.params {
-                    out.push_str("<Property");
-                    attr(&mut out, "name", k);
-                    attr(&mut out, "value", v);
-                    out.push_str(" />\n");
-                }
-                for m in &d.modification_docs {
-                    out.push_str("<ModificationDocument");
-                    attr(&mut out, "type", &m.doc_type);
-                    attr(&mut out, "path", &m.path.to_string_lossy());
-                    out.push_str(" />\n");
-                }
-                for t in &d.ignored_types {
-                    out.push_str("<IgnoredType");
-                    attr(&mut out, "name", t);
-                    out.push_str(" />\n");
-                }
-                out.push_str("</Document>\n");
-            }
-            ProjectNode::SubProject { name, path } => {
-                out.push_str("<ProjectReference");
-                attr(&mut out, "name", name);
-                attr(&mut out, "type", "_ProjectReference");
-                attr(&mut out, "path", &path.to_string_lossy());
-                out.push_str(" />\n");
-            }
-            // Les dossiers n'ont pas de forme XML observée : leurs documents
-            // sont écrits à plat.
-            ProjectNode::Folder { .. } => {}
+    // Les nœuds rangés dans un dossier sont écrits à l'intérieur de celui-ci.
+    let nested: std::collections::HashSet<usize> = project
+        .nodes
+        .iter()
+        .flat_map(|n| match n {
+            ProjectNode::Folder { children, .. } => children.clone(),
+            _ => Vec::new(),
+        })
+        .collect();
+    for n in 0..project.nodes.len() {
+        if !nested.contains(&n) {
+            node_xml(&mut out, project, n, 0);
         }
     }
     for c in &project.channels {
@@ -372,6 +416,57 @@ mod tests {
             path_replacements: Vec::new(),
         };
         let (back, warnings) = parse_project(&project_xml(&project), "demo").unwrap();
+        assert!(warnings.is_empty());
+        assert_eq!(back, project);
+    }
+
+    #[test]
+    fn folders_round_trip() {
+        // Dossier imbriqué : la forme est déduite de l'imbrication observée d'un
+        // niveau (`docs/interop-formats.md` §2.3).
+        let doc = |name: &str| {
+            ProjectNode::Document(DocumentDecl {
+                name: name.into(),
+                doc_type: "Text".into(),
+                path: PathBuf::from(format!("{name}.txt")),
+                position: Some((1, 2)),
+                ..Default::default()
+            })
+        };
+        let folder = |name: &str, children: Vec<usize>| ProjectNode::Folder {
+            name: name.into(),
+            default_type: None,
+            children,
+            position: Some((10, 20)),
+            size: Some((300, 500)),
+            category: Some("HLR".into()),
+        };
+        let project = Project {
+            name: "demo".into(),
+            nodes: vec![
+                folder("Haut", vec![1]),
+                doc("Spec"),
+                folder("Bas", vec![3, 4]),
+                doc("Design"),
+                folder("Interne", vec![5]),
+                doc("Tests"),
+            ],
+            channels: vec![Channel {
+                kind: ChannelKind::Cover,
+                covered: 0,
+                covering: vec![2],
+                category: None,
+            }],
+            ..Default::default()
+        };
+        let xml = project_xml(&project);
+        assert!(xml.contains("<Folder name=\"Haut\" category=\"HLR\" positionX=\"10\" positionY=\"20\" positionW=\"300\" positionH=\"500\">
+<Document name=\"Spec\""));
+        assert!(xml.contains(
+            "<Cover outputDocument=\"Haut\">
+<InputDocument name=\"Bas\" />"
+        ));
+        let (back, warnings) = parse_project(&xml, "demo").unwrap();
         assert!(warnings.is_empty());
         assert_eq!(back, project);
     }

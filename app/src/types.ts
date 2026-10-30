@@ -63,6 +63,8 @@ export interface ElementRef {
   name: string;
   documentName: string;
   status: Status;
+  typeName?: string;
+  text?: string;
 }
 
 export interface Row {

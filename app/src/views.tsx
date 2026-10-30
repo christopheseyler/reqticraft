@@ -326,6 +326,7 @@ export function Coverage({
                     className={`row${selected ? " selected" : ""}${structural ? " section" : ""} st-${r.status}`}
                     style={{ paddingLeft: 12 + r.depth * 16 }}
                     tabIndex={0}
+                    ref={selected ? (n) => n?.scrollIntoView({ block: "nearest" }) : undefined}
                     onClick={() => onSelect(document, r.id)}
                     onKeyDown={(e) => e.key === "Enter" && onSelect(document, r.id)}
                   >

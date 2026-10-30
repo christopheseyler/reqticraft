@@ -14,9 +14,19 @@ export interface DocumentNode {
   position: [number, number] | null;
 }
 
+export interface FolderNode {
+  kind: "folder";
+  name: string;
+  default_type: string | null;
+  children: number[];
+  position: [number, number] | null;
+  size: [number, number] | null;
+  category: string | null;
+}
+
 export type ProjectNode =
   | DocumentNode
-  | { kind: "folder"; name: string; default_type: string | null; children: number[] }
+  | FolderNode
   | { kind: "sub_project"; name: string; path: string };
 
 export interface Channel {

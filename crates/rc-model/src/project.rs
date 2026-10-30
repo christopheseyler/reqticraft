@@ -22,16 +22,51 @@ impl Project {
     pub fn node_by_name(&self, name: &str) -> Option<NodeId> {
         self.nodes.iter().position(|n| n.name() == name)
     }
+
+    /// Documents d'un nœud : lui-même, ou tous ceux d'un dossier et de ses sous-dossiers.
+    pub fn documents_of(&self, node: NodeId) -> Vec<NodeId> {
+        let mut out = Vec::new();
+        let mut stack = vec![node];
+        while let Some(n) = stack.pop() {
+            match &self.nodes[n] {
+                ProjectNode::Document(_) => out.push(n),
+                ProjectNode::Folder { children, .. }
+                    if out.len() + stack.len() < self.nodes.len() =>
+                {
+                    stack.extend(children.iter().rev())
+                }
+                _ => {}
+            }
+        }
+        out
+    }
+
+    /// Dossier qui contient le nœud, s'il y en a un.
+    pub fn parent_folder(&self, node: NodeId) -> Option<NodeId> {
+        self.nodes.iter().position(
+            |n| matches!(n, ProjectNode::Folder { children, .. } if children.contains(&node)),
+        )
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum ProjectNode {
     Document(DocumentDecl),
+    /// Dossier (*folder*) de documents, éventuellement imbriqué. Un canal qui
+    /// le vise s'applique à tous ses documents (`docs/interop-formats.md` §2.3).
     Folder {
         name: String,
         default_type: Option<String>,
         children: Vec<NodeId>,
+        /// Position dans le diagramme de l'éditeur de projet.
+        #[serde(default)]
+        position: Option<(i64, i64)>,
+        /// Largeur et hauteur dans le diagramme.
+        #[serde(default)]
+        size: Option<(i64, i64)>,
+        #[serde(default)]
+        category: Option<String>,
     },
     /// Sous-projet (projet composite), désigné par son fichier de résultats
     /// ou de configuration.
@@ -126,6 +161,28 @@ mod tests {
         };
         assert_eq!(project.node_by_name("Fournisseur"), Some(1));
         assert_eq!(project.node_by_name("Absent"), None);
+    }
+
+    #[test]
+    fn finds_parent_folders() {
+        let project = Project {
+            nodes: vec![
+                ProjectNode::Document(DocumentDecl::default()),
+                ProjectNode::Folder {
+                    name: "Logiciel".into(),
+                    default_type: None,
+                    children: vec![0],
+                    position: None,
+                    size: None,
+                    category: None,
+                },
+            ],
+            ..Default::default()
+        };
+        assert_eq!(project.parent_folder(0), Some(1));
+        assert_eq!(project.parent_folder(1), None);
+        assert_eq!(project.documents_of(1), vec![0]);
+        assert_eq!(project.documents_of(0), vec![0]);
     }
 
     #[test]

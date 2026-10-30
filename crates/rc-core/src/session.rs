@@ -93,6 +93,11 @@ pub struct ElementRef {
     pub name: String,
     pub document_name: String,
     pub status: Status,
+    /// Type et texte de l'élément lié, donnés seulement dans les liens du panneau Détails.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -434,7 +439,22 @@ impl Session {
             status: t
                 .element
                 .map_or(Status::None, |e| self.status(t.document, e)),
+            type_name: None,
+            text: None,
         }
+    }
+
+    /// Référence enrichie du type et du texte, pour naviguer d'un lien à l'autre.
+    fn link(&self, t: Target) -> ElementRef {
+        let mut r = self.reference(t);
+        if let Some(e) = t.element {
+            let doc = &self.run.analysis.documents[t.document];
+            if let Some(el) = doc.elements.get(e) {
+                r.type_name = Some(el.type_name.clone());
+                r.text = Some(element_text(doc, e));
+            }
+        }
+        r
     }
 
     fn document_index(&self, name: &str) -> Option<usize> {
@@ -590,7 +610,7 @@ impl Session {
         };
         let refs = |m: &HashMap<Target, Vec<Target>>| {
             m.get(&t)
-                .map(|v| v.iter().map(|&x| self.reference(x)).collect())
+                .map(|v| v.iter().map(|&x| self.link(x)).collect())
                 .unwrap_or_default()
         };
         let mut path: Vec<ElementRef> = doc

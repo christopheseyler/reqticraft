@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+<Folder name="Exigences" category="HLR" positionX="800" positionY="400" positionW="1200" positionH="500">
+<Document name="Spécification" positionX="800" positionY="400" type="Text" path="specification.txt">
+</Document>
+</Folder>
+<Folder name="Réalisation" category="Design" positionX="800" positionY="1400" positionW="1200" positionH="500">
+<Document name="Conception" positionX="800" positionY="400" type="Text" path="design.txt">
+</Document>
+<Document name="Tests" positionX="1800" positionY="400" type="Text" path="tests.txt">
+</Document>
+</Folder>
+<Cover outputDocument="Exigences" positionX="0" positionY="0">
+<InputDocument name="Réalisation" />
+</Cover>
+<Cover outputDocument="Conception" positionX="0" positionY="0">
+<InputDocument name="Tests" />
+</Cover>
+</Project>

@@ -15,6 +15,7 @@ Chaque conclusion porte une étiquette de preuve :
 | **[EX×]** | Recoupement : le même projet existe dans les deux formats (ancien et nouveau), ce qui donne la correspondance champ par champ. |
 | **[INF]** | Inférence plausible, non confirmée : **à vérifier** par un test en boîte noire (enregistrer depuis Reqtify, puis observer le fichier). |
 | **[REA]** | Observation faite avec REA. |
+| **[BB]** | Boîte noire : observé dans un fichier enregistré par Reqtify lors d'une utilisation normale (§10). |
 
 Corpus étudié :
 
@@ -114,9 +115,43 @@ Sémantique :
 - **`ProjectReference`** : sous-projet référencé par son `.rqtfimage` **[EX]** `EX\Coupling\Composite Project\CompositeProject1\CompositeProject1.rqtf`.
 - **`ReplacingPath`** : le document `Specification` du parent remplace `SubContractor1/Specification`
   et `SubContractor2/Specification` **[EX]** (même fichier) ; **[DOC]** CPP.
-- **Absences notables** : aucun exemple XML ne contient de **dossier**, de canal **miroir** ou
-  **dépendance**, d'**annotation**, de catégorie de canal ni de mot de passe. Leur syntaxe est **inconnue**
-  et doit être établie en boîte noire (voir §10).
+- **Absences notables** : aucun exemple XML livré ne contient de **dossier** (voir §2.3), de canal
+  **miroir** ou **dépendance**, d'**annotation**, de catégorie de canal ni de mot de passe. Leur syntaxe
+  est **inconnue** et doit être établie en boîte noire (voir §10).
+
+### 2.3 Dossiers (*folders*) (2026-10-30)
+
+Source **[BB]** : un projet réel enregistré par Reqtify (`<!-- Generator: reqtify -->`), fourni par
+l'utilisateur le 2026-10-30 (11 dossiers, 18 documents). Il reste hors du dépôt : la forme est
+reprise avec nos noms dans `fixtures/thermostat/text/thermostat-folders.rqtf`.
+
+```xml
+<Folder name="…" category="HLRS" positionX="4850" positionY="2345" positionW="1635" positionH="500">
+<Document name="…" positionX="2420" positionY="2810" type="…" path="…"> … </Document>
+</Folder>
+<Cover outputDocument="NomDeDossier" positionX="…" positionY="…">
+<InputDocument name="NomDeDossier" />
+</Cover>
+```
+
+- `Folder` est un enfant de `Project` ; ses documents sont **imbriqués** dans l'élément. Attributs :
+  `name`, `category` (facultatif), `positionX`, `positionY`, `positionW`, `positionH` (taille dans le
+  diagramme). Un dossier peut être vide **[BB]**.
+- Les `positionX`/`positionY` des documents d'un dossier sont ceux de la vue intérieure du dossier
+  (valeurs sans rapport avec la position du dossier) **[BB]**.
+- `Cover@outputDocument` et `InputDocument@name` désignent indifféremment un document ou un
+  **dossier**, par son nom ; un `Cover` peut avoir le même dossier en entrée et en sortie, et un
+  document peut se couvrir lui-même (`outputDocument="X"` / `InputDocument name="X"`) **[BB]**.
+- **Dossiers imbriqués** : non présents dans l'échantillon. Le guide les autorise (« Adding a Folder » ;
+  le chapitre « Using Folders » dit encore le contraire). ReqtiCraft écrit un `Folder` dans un `Folder`
+  **[INF]**.
+- `default_type` (type par défaut des documents créés dans le dossier, UG « Adding a Folder ») : forme
+  non observée, non écrite.
+- **Sémantique** **[DOC]** UG « Using Folders » : un canal entre un dossier haut niveau et un dossier
+  bas niveau donne à chaque document du dossier haut une couverture **combinée (OU)** par les
+  documents du dossier bas ; de même document ← dossier et dossier ← document. ReqtiCraft déplie
+  ainsi chaque canal touchant un dossier (`rc-core::flatten_into`), sans qu'un document se couvre
+  lui-même par ce dépliage.
 
 ## 3. Projet `.rqtf` — ancien format (INI)
 
@@ -501,7 +536,7 @@ n'est nécessaire.
 
 | # | Question | Expérience |
 |---|---|---|
-| Q1 | Syntaxe XML et INI des **dossiers**, canaux **miroir** et **dépendance**, **annotations**, catégories de canal, mot de passe | Créer chaque objet dans l'éditeur de projet, enregistrer dans les deux formats, comparer. |
+| Q1 | Syntaxe XML (**établie pour les dossiers**, §2.3) et INI des **dossiers**, canaux **miroir** et **dépendance**, **annotations**, catégories de canal, mot de passe | Créer chaque objet dans l'éditeur de projet, enregistrer dans les deux formats, comparer. |
 | Q2 | Couverture **OU** combinée : un `Cover` avec plusieurs `InputDocument` ? | Créer un canal combiné, enregistrer. |
 | Q3 | Codes 4 et 5 de `Indexes` / `index1..4` (1, 2, 3 et 6 établis, voir §4.1) | Affecter les rôles GUID et parent dans le testeur d'expressions, enregistrer, comparer. |
 | Q4 | Marqueurs d'`analysisTree` (`$o`, GUID, parent, cible…) | Cocher chaque rôle dans l'éditeur XML, enregistrer. |

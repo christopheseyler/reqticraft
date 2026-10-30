@@ -174,18 +174,46 @@ fn flatten_into(
         }
     }
 
+    // Canaux touchant un dossier (UG « Using Folders ») : chaque document du dossier
+    // couvert reçoit un canal combiné (OU) depuis tous les documents couvrants,
+    // dossiers dépliés. Un document ne se couvre pas lui-même par ce biais.
     for ch in &project.channels {
-        let covered = node_doc[ch.covered];
-        let covering: Vec<usize> = ch.covering.iter().filter_map(|&c| node_doc[c]).collect();
-        match covered {
-            Some(c) if !covering.is_empty() => flat.channels.push(ChannelInput {
-                covered: c,
-                covering,
-            }),
-            _ => flat.messages.push(project_message(
+        let folder = |k: usize| matches!(project.nodes[k], ProjectNode::Folder { .. });
+        let unfold = |k: usize| -> Vec<usize> {
+            project
+                .documents_of(k)
+                .into_iter()
+                .filter_map(|d| node_doc[d])
+                .collect()
+        };
+        let mut covering: Vec<usize> = ch.covering.iter().flat_map(|&k| unfold(k)).collect();
+        covering.sort_unstable();
+        covering.dedup();
+        let through_folder = folder(ch.covered) || ch.covering.iter().any(|&k| folder(k));
+        let covered = if folder(ch.covered) {
+            unfold(ch.covered)
+        } else {
+            node_doc[ch.covered].into_iter().collect()
+        };
+        if covered.is_empty() && !folder(ch.covered) {
+            flat.messages.push(project_message(
                 "unknownCoveringDocument",
                 "canal vers un sous-projet entier : non pris en charge, ignoré".into(),
-            )),
+            ));
+            continue;
+        }
+        for c in covered {
+            let covering: Vec<usize> = covering
+                .iter()
+                .copied()
+                .filter(|&k| !through_folder || k != c)
+                .collect();
+            if !covering.is_empty() {
+                flat.channels.push(ChannelInput {
+                    covered: c,
+                    covering,
+                });
+            }
         }
     }
 

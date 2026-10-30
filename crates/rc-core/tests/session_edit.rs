@@ -88,6 +88,102 @@ fn p1_project_built_step_by_step() {
 }
 
 #[test]
+fn folders_group_documents() {
+    let dir = workspace("folders");
+    let path = dir.join("groupes.rcproj");
+    let mut session = None;
+    call(&mut session, "newProject", &json!({ "path": path })).unwrap();
+    let s = session.as_mut().unwrap();
+
+    // « Réalisation » regroupe la conception et les tests ; les canaux restent
+    // entre documents, à travers le groupe.
+    let mut project = s.project_info().project;
+    project.nodes = vec![
+        doc("Spécification", "specification.txt", 0),
+        doc("Conception", "design.txt", 300),
+        doc("Tests", "tests.txt", 600),
+        ProjectNode::Folder {
+            name: "Réalisation".into(),
+            default_type: None,
+            children: vec![1, 2],
+            position: Some((300, 300)),
+            size: None,
+            category: None,
+        },
+    ];
+    project.channels = vec![
+        Channel {
+            kind: ChannelKind::Cover,
+            covered: 0,
+            covering: vec![1],
+            category: None,
+        },
+        Channel {
+            kind: ChannelKind::Cover,
+            covered: 1,
+            covering: vec![2],
+            category: None,
+        },
+    ];
+    s.update_project(project.clone()).unwrap();
+    let o = s.overview();
+    assert_eq!(o.documents.len(), 3);
+    assert_eq!((o.covered, o.coverable), (11, 13));
+
+    // Un canal depuis le dossier : Spécification ← Conception OU Tests.
+    let mut via = project.clone();
+    via.channels[0].covering = vec![3];
+    s.update_project(via).unwrap();
+    assert_eq!(s.overview().documents[0].covered, Some(5));
+
+    // Refusés : un document dans deux dossiers, un cycle.
+    let mut bad = project.clone();
+    bad.nodes.push(ProjectNode::Folder {
+        name: "Autre".into(),
+        default_type: None,
+        children: vec![2, 3],
+        position: None,
+        size: None,
+        category: None,
+    });
+    assert!(s.update_project(bad.clone()).is_err());
+    if let ProjectNode::Folder { children, .. } = &mut bad.nodes[3] {
+        children.retain(|&c| c != 2);
+        children.push(4);
+    }
+    if let ProjectNode::Folder { children, .. } = &mut bad.nodes[4] {
+        *children = vec![3];
+    }
+    assert!(s.update_project(bad).is_err());
+
+    // Les deux formats gardent le dossier.
+    s.update_project(project).unwrap();
+    let rqtf = dir.join("groupes.rqtf");
+    s.save(Some(rqtf.clone())).unwrap();
+    let r = Session::open(&rqtf, &[]).unwrap();
+    let rp = r.project_info().project;
+    let tests = rp.node_by_name("Tests").unwrap();
+    assert_eq!(
+        rp.nodes[rp.parent_folder(tests).unwrap()].name(),
+        "Réalisation"
+    );
+    assert_eq!(r.overview().covered, 11);
+    s.save(Some(path.clone())).unwrap();
+    let reopened = Session::open(&path, &[]).unwrap();
+    let p = reopened.project_info().project;
+    assert_eq!(p.parent_folder(2), Some(3));
+    assert!(matches!(
+        &p.nodes[3],
+        ProjectNode::Folder {
+            position: Some((300, 300)),
+            ..
+        }
+    ));
+    assert_eq!(reopened.overview().covered, 11);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
 fn p2_type_duplicated_and_tested() {
     let dir = workspace("p2");
     let src = Path::new(env!("CARGO_MANIFEST_DIR"))

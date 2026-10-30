@@ -112,6 +112,28 @@ fn text_projects() {
 }
 
 #[test]
+fn folder_projects() {
+    // Exigences ← Réalisation (dossiers) : la spécification est couverte par la
+    // combinaison OU de la conception et des tests ; Conception ← Tests à l'intérieur.
+    let a = analyze("text/thermostat-folders.rqtf");
+    let spec = doc_index(&a, "Spécification");
+    let design = doc_index(&a, "Conception");
+    assert_eq!(a.summaries[spec].covered, Some(5));
+    assert_eq!(a.summaries[design].covered, Some(6));
+    let flat = analyze("text/thermostat.rqtf");
+    assert_eq!(
+        (
+            a.summaries[spec].requirements,
+            a.summaries[design].requirements
+        ),
+        (
+            flat.summaries[spec].requirements,
+            flat.summaries[design].requirements
+        )
+    );
+}
+
+#[test]
 fn word_projects() {
     check_full_project("docx/thermostat.rqtf");
     check_full_project("docx/thermostat-ini.rqtf");

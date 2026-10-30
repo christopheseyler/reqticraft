@@ -60,6 +60,15 @@ fn overview_and_queries() {
     let d = s.details(0, req1).unwrap();
     assert_eq!(d.status, Status::Covered);
     assert_eq!(d.covered_by[0].name, "DES_REQ1 Échantillonnage du capteur");
+    // Les liens portent le type et le texte de l'élément lié, pour naviguer sans le sélectionner.
+    assert!(d.covered_by[0].type_name.is_some());
+    assert!(!d.covered_by[0].text.as_deref().unwrap_or("").is_empty());
+    let des = d.covered_by[0].element.unwrap();
+    let back = s.details(d.covered_by[0].document, des).unwrap();
+    assert!(back
+        .covers
+        .iter()
+        .any(|c| c.element == Some(req1) && c.text.is_some()));
     assert!(d.text.contains("toutes les 10 secondes"));
     assert!(d.attributes.iter().any(|(n, _)| n == "Priority"));
 

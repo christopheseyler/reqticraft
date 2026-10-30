@@ -11,12 +11,12 @@ import { Coverage, Dashboard, Home, Impact, Problems } from "./views";
 const VIEWS = [
   { id: "home", label: "Accueil" },
   { id: "dashboard", label: "Tableau de bord" },
+  { id: "project", label: "Projet" },
   { id: "coverage", label: "Couverture" },
   { id: "impact", label: "Impact" },
   { id: "problems", label: "Problèmes" },
   { id: "snapshots", label: "Instantanés" },
   { id: "reports", label: "Rapports" },
-  { id: "project", label: "Projet" },
   { id: "types", label: "Types" },
   { id: "filters", label: "Filtres" },
 ] as const;

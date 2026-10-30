@@ -568,6 +568,47 @@ select {
   overflow: auto;
 }
 
+.details.zones {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.zone {
+  padding: 12px 24px;
+  overflow: auto;
+}
+
+.zone-links {
+  flex: 0 1 auto;
+  max-height: 30%;
+  background: var(--surface-2);
+}
+
+.zone-links:first-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.zone-links:last-child {
+  border-top: 1px solid var(--border);
+}
+
+.zone-links h3 {
+  margin-top: 0;
+}
+
+.zone-main {
+  flex: 1 1 auto;
+  min-height: 120px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.zone-links .link-card {
+  background: var(--surface);
+}
+
 .details.empty {
   display: flex;
   align-items: center;
@@ -586,6 +627,60 @@ select {
 .element-text {
   white-space: pre-wrap;
   line-height: 1.5;
+}
+
+.details .back {
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+}
+
+.link-group h4 {
+  margin: 10px 0 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.links li.link-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  background: var(--bg);
+}
+
+.links li.st-covered {
+  border-left-color: var(--ok);
+}
+
+.links li.st-uncovered {
+  border-left-color: var(--bad);
+}
+
+.link-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.link-head .link {
+  font-weight: 600;
+  text-align: left;
+}
+
+.link-text {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .attributes {
@@ -859,6 +954,38 @@ select {
 .node:focus-visible rect {
   stroke: var(--accent);
   stroke-dasharray: 4 3;
+}
+
+.node.folder rect,
+.folder-tab {
+  fill: var(--surface-2);
+  stroke: var(--muted);
+  stroke-width: 2;
+}
+
+.node.folder.selected rect,
+.node.folder.selected .folder-tab {
+  stroke: var(--accent);
+  fill: var(--accent-soft);
+}
+
+.crumbs-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 8px;
+}
+
+.crumbs-bar .link:disabled {
+  color: var(--text);
+  font-weight: 600;
+  cursor: default;
+  text-decoration: none;
+}
+
+.crumbs-bar .button {
+  margin-left: 12px;
 }
 
 .node-name {

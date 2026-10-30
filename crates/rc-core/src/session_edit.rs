@@ -8,7 +8,7 @@ use crate::session::Session;
 use crate::{capture_document, intermediate, DocumentEntry};
 use rc_analysis::filter;
 use rc_interop::{write, NativeProject, TypeLibrary};
-use rc_model::{CaptureRule, DocumentType, ElementClass, FilterSet, Project};
+use rc_model::{CaptureRule, DocumentType, ElementClass, FilterSet, Project, ProjectNode};
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -114,21 +114,45 @@ fn check_project(p: &Project) -> Result<(), String> {
     let mut names = HashSet::new();
     for n in &p.nodes {
         if n.name().trim().is_empty() {
-            return Err("chaque document doit avoir un nom".into());
+            return Err("chaque document et chaque dossier doit avoir un nom".into());
         }
         if !names.insert(n.name().to_lowercase()) {
             return Err(format!("le nom « {} » est utilisé deux fois", n.name()));
         }
     }
+    // Dossiers : chaque nœud dans au plus un dossier, sans cycle.
+    let mut parent = vec![None; p.nodes.len()];
+    for (f, n) in p.nodes.iter().enumerate() {
+        if let ProjectNode::Folder { name, children, .. } = n {
+            for &c in children {
+                if c >= p.nodes.len() || c == f {
+                    return Err(format!("le dossier « {name} » contient un nœud invalide"));
+                }
+                if parent[c].replace(f).is_some() {
+                    return Err(format!(
+                        "« {} » est rangé dans deux dossiers",
+                        p.nodes[c].name()
+                    ));
+                }
+            }
+        }
+    }
+    for start in 0..p.nodes.len() {
+        let (mut at, mut steps) = (start, 0);
+        while let Some(up) = parent[at] {
+            at = up;
+            steps += 1;
+            if steps > p.nodes.len() {
+                return Err(format!(
+                    "le dossier « {} » se contient lui-même",
+                    p.nodes[start].name()
+                ));
+            }
+        }
+    }
     for c in &p.channels {
         if c.covered >= p.nodes.len() || c.covering.iter().any(|&k| k >= p.nodes.len()) {
             return Err("un canal désigne un document absent".into());
-        }
-        if c.covering.contains(&c.covered) {
-            return Err(format!(
-                "le document « {} » ne peut pas se couvrir lui-même",
-                p.nodes[c.covered].name()
-            ));
         }
     }
     Ok(())

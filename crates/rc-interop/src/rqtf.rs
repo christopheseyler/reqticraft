@@ -41,36 +41,9 @@ fn parse_xml(text: &str, warnings: &mut Vec<String>) -> Result<Project, InteropE
     for node in root.children().filter(|n| n.is_element()) {
         match node.tag_name().name() {
             "Property" => project.properties.push(property(&node)),
-            "Document" => {
-                let mut doc = DocumentDecl {
-                    name: attr(&node, "name"),
-                    doc_type: attr(&node, "type"),
-                    path: PathBuf::from(attr(&node, "path")),
-                    absolute_path: node.attribute("absolutePath").map(PathBuf::from),
-                    category: node.attribute("category").map(str::to_owned),
-                    position: position(&node),
-                    ..Default::default()
-                };
-                for child in node.children().filter(|n| n.is_element()) {
-                    match child.tag_name().name() {
-                        "Property" => doc.params.push(property(&child)),
-                        "ModificationDocument" => doc.modification_docs.push(ModificationDocRef {
-                            path: PathBuf::from(attr(&child, "path")),
-                            doc_type: attr(&child, "type"),
-                        }),
-                        "IgnoredType" => doc.ignored_types.push(attr(&child, "name")),
-                        _ => {}
-                    }
-                }
-                if node.attribute("withRichText") == Some("true") {
-                    doc.params.push(("withRichText".into(), "1".into()));
-                }
-                project.nodes.push(ProjectNode::Document(doc));
+            "Document" | "Folder" | "ProjectReference" => {
+                xml_node(&node, &mut project);
             }
-            "ProjectReference" => project.nodes.push(ProjectNode::SubProject {
-                name: attr(&node, "name"),
-                path: PathBuf::from(attr(&node, "path")),
-            }),
             "Cover" => covers.push((
                 attr(&node, "outputDocument"),
                 node.children()
@@ -98,6 +71,65 @@ fn parse_xml(text: &str, warnings: &mut Vec<String>) -> Result<Project, InteropE
         push_channel(&mut project, &covered, &covering, warnings);
     }
     Ok(project)
+}
+
+/// Lit un document, un dossier (et son contenu) ou un sous-projet ; renvoie son indice.
+fn xml_node(node: &roxmltree::Node, project: &mut Project) -> Option<usize> {
+    let index = project.nodes.len();
+    match node.tag_name().name() {
+        "Document" => {
+            let mut doc = DocumentDecl {
+                name: attr(node, "name"),
+                doc_type: attr(node, "type"),
+                path: PathBuf::from(attr(node, "path")),
+                absolute_path: node.attribute("absolutePath").map(PathBuf::from),
+                category: node.attribute("category").map(str::to_owned),
+                position: position(node),
+                ..Default::default()
+            };
+            for child in node.children().filter(|n| n.is_element()) {
+                match child.tag_name().name() {
+                    "Property" => doc.params.push(property(&child)),
+                    "ModificationDocument" => doc.modification_docs.push(ModificationDocRef {
+                        path: PathBuf::from(attr(&child, "path")),
+                        doc_type: attr(&child, "type"),
+                    }),
+                    "IgnoredType" => doc.ignored_types.push(attr(&child, "name")),
+                    _ => {}
+                }
+            }
+            if node.attribute("withRichText") == Some("true") {
+                doc.params.push(("withRichText".into(), "1".into()));
+            }
+            project.nodes.push(ProjectNode::Document(doc));
+        }
+        "ProjectReference" => project.nodes.push(ProjectNode::SubProject {
+            name: attr(node, "name"),
+            path: PathBuf::from(attr(node, "path")),
+        }),
+        // Un dossier contient ses documents ; leurs positions sont celles de la
+        // vue intérieure du dossier.
+        "Folder" => {
+            project.nodes.push(ProjectNode::Folder {
+                name: attr(node, "name"),
+                default_type: None,
+                children: Vec::new(),
+                position: position(node),
+                size: pair(node, "positionW", "positionH"),
+                category: node.attribute("category").map(str::to_owned),
+            });
+            let children: Vec<usize> = node
+                .children()
+                .filter(|n| n.is_element())
+                .filter_map(|c| xml_node(&c, project))
+                .collect();
+            if let ProjectNode::Folder { children: c, .. } = &mut project.nodes[index] {
+                *c = children;
+            }
+        }
+        _ => return None,
+    }
+    Some(index)
 }
 
 fn parse_ini(text: &str, warnings: &mut Vec<String>) -> Result<Project, InteropError> {
@@ -185,9 +217,13 @@ fn property(node: &roxmltree::Node) -> (String, String) {
 }
 
 fn position(node: &roxmltree::Node) -> Option<(i64, i64)> {
+    pair(node, "positionX", "positionY")
+}
+
+fn pair(node: &roxmltree::Node, a: &str, b: &str) -> Option<(i64, i64)> {
     Some((
-        node.attribute("positionX")?.parse().ok()?,
-        node.attribute("positionY")?.parse().ok()?,
+        node.attribute(a)?.parse().ok()?,
+        node.attribute(b)?.parse().ok()?,
     ))
 }
 
@@ -220,6 +256,58 @@ fn parse_at_position(value: &str) -> Option<(i64, i64)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Forme observée dans un projet enregistré par Reqtify (interop-formats.md §2.3),
+    // réécrite avec nos noms.
+    const FOLDERS: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+<Folder name="Specs" category="HLRS" positionX="4850" positionY="2345" positionW="1635" positionH="500">
+<Document name="SSS" positionX="2420" positionY="2810" type="Word" path="sss.docx">
+<Property name="withCharacterStyles" value="1" />
+</Document>
+<Document name="ICD" positionX="3670" positionY="2800" type="Word" path="icd.docx">
+</Document>
+</Folder>
+<Folder name="Empty" positionX="890" positionY="2410" positionW="1500" positionH="500">
+</Folder>
+<Document name="Code" positionX="1" positionY="2" type="C" path="src" />
+<Cover outputDocument="Specs" positionX="4820" positionY="2920">
+<InputDocument name="Code" />
+</Cover>
+<Cover outputDocument="SSS" positionX="0" positionY="0">
+<InputDocument name="SSS" />
+</Cover>
+</Project>"#;
+
+    #[test]
+    fn reads_folders() {
+        let (p, warnings) = parse_project(FOLDERS, "f").unwrap();
+        assert!(warnings.is_empty(), "{warnings:?}");
+        let names: Vec<&str> = p.nodes.iter().map(|n| n.name()).collect();
+        assert_eq!(names, ["Specs", "SSS", "ICD", "Empty", "Code"]);
+        assert_eq!(
+            p.nodes[0],
+            ProjectNode::Folder {
+                name: "Specs".into(),
+                default_type: None,
+                children: vec![1, 2],
+                position: Some((4850, 2345)),
+                size: Some((1635, 500)),
+                category: Some("HLRS".into()),
+            }
+        );
+        assert_eq!(p.parent_folder(2), Some(0));
+        assert_eq!(p.documents_of(3), Vec::<usize>::new());
+        // Canal vers un dossier, et document qui se couvre lui-même.
+        assert_eq!(
+            (p.channels[0].covered, p.channels[0].covering.clone()),
+            (0, vec![4])
+        );
+        assert_eq!(
+            (p.channels[1].covered, p.channels[1].covering.clone()),
+            (1, vec![1])
+        );
+    }
 
     const XML: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
 <Project>
