@@ -1084,6 +1084,26 @@ select {
   cursor: crosshair;
 }
 
+.diagram .node.link-target rect,
+.diagram .node.link-target .folder-tab {
+  stroke: var(--accent);
+  stroke-width: 3;
+  fill: var(--accent-soft);
+}
+
+.diagram .junction.link-target {
+  stroke: var(--accent);
+  fill: var(--accent);
+}
+
+.ghost-line {
+  stroke: var(--accent);
+}
+
+.ghost-head {
+  fill: var(--accent);
+}
+
 .node.link-from rect {
   stroke: var(--accent);
   stroke-dasharray: 6 3;

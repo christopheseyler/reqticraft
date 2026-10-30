@@ -72,9 +72,9 @@ function removeAt(p: Project, i: number): Project {
   return p;
 }
 
-/** Ajoute le canal « from couvre to » s'il n'existe pas déjà. */
+/** Ajoute le canal « from couvre to » s'il n'existe pas déjà (from = to : lien vers soi-même). */
 function addChannel(p: Project, from: number, to: number): Project {
-  if (from !== to && !p.channels.some((c) => c.covered === to && c.covering.includes(from))) {
+  if (!p.channels.some((c) => c.covered === to && c.covering.includes(from))) {
     p.channels.push({ kind: "cover", covered: to, covering: [from], category: null } as Channel);
   }
   return p;
@@ -275,7 +275,7 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
   const linkTo = (i: number) => {
     if (linking === null) {
       setLinking(i);
-    } else if (linking !== false && linking !== i) {
+    } else if (linking !== false) {
       update((p) => addChannel(p, linking, i));
       setLinking(false);
     }
@@ -286,7 +286,7 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
     if (linking === null || linking === false) return;
     update((p) => {
       const c = p.channels[ci];
-      if (c.covered !== linking && !c.covering.includes(linking)) {
+      if (!c.covering.includes(linking)) {
         c.covering.push(linking);
         // Le cercle se place au barycentre des couvrants, jusqu'à ce qu'on le déplace.
         c.position = null;
@@ -419,6 +419,7 @@ export function ProjectEditor({ onApplied }: { onApplied: (o: Overview) => void 
             linking={linking}
             onLink={linkTo}
             onLinkChannel={linkToChannel}
+            onCancelLink={() => setLinking(false)}
             onSelect={selectNode}
             onSelectChannel={(ci) => {
               setChannel(ci);
@@ -607,6 +608,7 @@ function Diagram({
   linking,
   onLink,
   onLinkChannel,
+  onCancelLink,
   onSelect,
   onSelectChannel,
   onMoveChannel,
@@ -620,6 +622,7 @@ function Diagram({
   linking: number | null | false;
   onLink: (i: number) => void;
   onLinkChannel: (ci: number) => void;
+  onCancelLink: () => void;
   onSelect: (i: number | null) => void;
   onSelectChannel: (ci: number) => void;
   onMoveChannel: (ci: number, pos: [number, number]) => void;
@@ -629,6 +632,30 @@ function Diagram({
   const svg = useRef<SVGSVGElement>(null);
   // Glissement d'un nœud (i) ou du cercle de jonction d'un canal (ci).
   const drag = useRef<{ i: number; dx: number; dy: number } | { ci: number } | null>(null);
+  // Création d'un lien : cible survolée, position du curseur, et bouton enfoncé
+  // depuis le choix de la source (glisser-relâcher) ou non (clic, puis clic).
+  type Target = { node: number } | { ci: number };
+  const [hover, setHover] = useState<Target | null>(null);
+  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
+  const press = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const finish = (t: Target | null) => {
+    if (t === null) onCancelLink();
+    else if ("node" in t) onLink(t.node);
+    else onLinkChannel(t.ci);
+    press.current = null;
+    setCursor(null);
+  };
+  const hovered = (t: Target) =>
+    hover !== null && ("node" in t ? "node" in hover && hover.node === t.node : "ci" in hover && hover.ci === t.ci);
+  const enterTarget = (t: Target) => () => linking !== false && setHover(t);
+  // Cible sous le pointeur : un nœud, ou le cercle d'un canal une fois la source choisie.
+  const targetAt = (e: React.PointerEvent): Target | null => {
+    const el = (e.target as Element).closest("[data-node], [data-channel]");
+    if (!el) return null;
+    if (el.hasAttribute("data-node")) return { node: Number(el.getAttribute("data-node")) };
+    return typeof linking === "number" ? { ci: Number(el.getAttribute("data-channel")) } : null;
+  };
+  const leaveTarget = (t: Target) => () => setHover((h) => (h && hovered(t) ? null : h));
 
   const shown = project.nodes.flatMap((_, i) => (parentOf(project, i) === level ? [i] : []));
 
@@ -670,7 +697,23 @@ function Diagram({
     const froms = [...new Set(c.covering.map((k) => proxy(project, k, level)))].filter(
       (f): f is number => f !== null && f !== to,
     );
-    if (to === null || froms.length === 0) return [];
+    // Lien vers soi-même : le nœud se couvre lui-même (pas un canal interne à un dossier fermé).
+    const self = to === c.covered && c.covering.includes(c.covered);
+    if (to === null || (froms.length === 0 && !self)) return [];
+    if (froms.length === 0) {
+      const [x, y] = pos(to);
+      const s0 = { x: x + W * 0.75, y };
+      const c1 = { x: x + W * 0.75, y: y - 45 * box.k };
+      const c2 = { x: x + W + 45 * box.k, y: y + H * 0.35 };
+      const e = { x: x + W + 2 * box.k, y: y + H * 0.35 };
+      const loop = `M${s0.x},${s0.y} C${c1.x},${c1.y} ${c2.x},${c2.y} ${e.x},${e.y}`;
+      // Cercle au milieu de la courbe (t = 0,5).
+      const j = {
+        x: 0.125 * s0.x + 0.375 * c1.x + 0.375 * c2.x + 0.125 * e.x,
+        y: 0.125 * s0.y + 0.375 * c1.y + 0.375 * c2.y + 0.125 * e.y,
+      };
+      return [{ ci, to, froms: [to], combined: false, j, b: center(to), loop }];
+    }
     const combined = c.covering.length > 1;
     const direct = to === c.covered && c.covering.every((k) => proxy(project, k, level) === k);
     const b = center(to);
@@ -680,7 +723,7 @@ function Diagram({
       combined && direct && c.position
         ? { x: c.position[0], y: c.position[1] }
         : { x: (fx + b.x) / 2, y: (fy + b.y) / 2 };
-    return [{ ci, to, froms, combined, j, b }];
+    return [{ ci, to, froms: self ? [...froms, to] : froms, combined, j, b, loop: null as string | null }];
   });
 
   const toModel = (e: React.PointerEvent) => {
@@ -695,23 +738,69 @@ function Diagram({
       viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`}
       role="img"
       aria-label="Diagramme du projet"
+      onPointerDown={(e) => {
+        if (linking === false) return;
+        const [x, y] = toModel(e);
+        setCursor({ x, y });
+        const t = targetAt(e);
+        if (linking === null) {
+          // Choix de la source : un nœud.
+          if (t && "node" in t) {
+            onLink(t.node);
+            setHover(t);
+            press.current = { x: e.clientX, y: e.clientY, moved: false };
+          }
+        } else {
+          // Second clic : sur une cible, le lien est créé ; ailleurs, il est annulé.
+          finish(t);
+        }
+      }}
       onPointerMove={(e) => {
+        if (linking !== false) {
+          const [x, y] = toModel(e);
+          setCursor({ x, y });
+          const p = press.current;
+          if (p && Math.hypot(e.clientX - p.x, e.clientY - p.y) > 4) p.moved = true;
+          return;
+        }
         const d = drag.current;
         if (!d) return;
         const [x, y] = toModel(e);
         if ("ci" in d) onMoveChannel(d.ci, [Math.round(x), Math.round(y)]);
         else onMove(d.i, [Math.round(x - d.dx), Math.round(y - d.dy)]);
       }}
-      onPointerUp={() => (drag.current = null)}
-      onPointerLeave={() => (drag.current = null)}
+      onPointerUp={(e) => {
+        drag.current = null;
+        // Glisser-relâcher : relâché sur une cible, le lien est créé ; ailleurs, annulé.
+        // Sans mouvement, c'est un clic : on attend le second clic.
+        const p = press.current;
+        if (p) {
+          press.current = null;
+          if (p.moved) finish(targetAt(e));
+        }
+      }}
+      onPointerLeave={() => {
+        drag.current = null;
+        setHover(null);
+      }}
       onClick={(e) => e.target === svg.current && onSelect(null)}
     >
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" className="arrow-head" />
         </marker>
+        <marker id="arrow-ghost" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" className="ghost-head" />
+        </marker>
       </defs>
-      {drawn.map(({ ci, froms, j, b, combined }) => {
+      {drawn.map(({ ci, froms, j, b, combined, loop }) => {
+        if (loop) {
+          return (
+            <g key={ci} className={`channel${channel === ci ? " selected" : ""}`}>
+              <path d={loop} className="channel-line" fill="none" strokeWidth={2 * box.k} markerEnd="url(#arrow)" />
+            </g>
+          );
+        }
         // Arrêt de la flèche au bord du rectangle couvert.
         const dx = j.x - b.x;
         const dy = j.y - b.y;
@@ -741,18 +830,21 @@ function Diagram({
         return (
           <g
             key={i}
-            className={`node${folder ? " folder" : ""}${selected === i ? " selected" : ""}${linking === i ? " link-from" : ""}`}
+            className={`node${folder ? " folder" : ""}${selected === i ? " selected" : ""}${linking === i ? " link-from" : ""}${
+              linking !== false && hovered({ node: i }) ? " link-target" : ""
+            }`}
             transform={`translate(${x} ${y}) scale(${box.k})`}
             tabIndex={0}
             role="button"
             aria-label={folder ? `Dossier ${n.name}` : n.name}
             onKeyDown={(e) => e.key === "Enter" && (folder ? onOpen(i) : onSelect(i))}
             onDoubleClick={() => folder && linking === false && onOpen(i)}
+            data-node={i}
+            onPointerEnter={enterTarget({ node: i })}
+            onPointerLeave={leaveTarget({ node: i })}
             onPointerDown={(e) => {
-              if (linking !== false) {
-                onLink(i);
-                return;
-              }
+              // En mode lien, le diagramme gère le clic.
+              if (linking !== false) return;
               const [mx, my] = toModel(e);
               drag.current = { i, dx: mx - x, dy: my - y };
               onSelect(i);
@@ -780,20 +872,38 @@ function Diagram({
           cy={j.y}
           r={(combined ? 7 : 5) * box.k}
           strokeWidth={2 * box.k}
-          className={`junction${combined ? " combined" : ""}${channel === ci ? " selected" : ""}`}
+          className={`junction${combined ? " combined" : ""}${channel === ci ? " selected" : ""}${
+            typeof linking === "number" && hovered({ ci }) ? " link-target" : ""
+          }`}
           role="button"
           aria-label={`Canal ${froms.map((f) => project.nodes[f].name).join(" OU ")} → ${project.nodes[to].name}`}
+          data-channel={ci}
+          onPointerEnter={() => typeof linking === "number" && setHover({ ci })}
+          onPointerLeave={leaveTarget({ ci })}
           onPointerDown={(e) => {
+            // En mode lien, le diagramme gère le clic.
+            if (linking !== false) return;
             e.stopPropagation();
-            if (linking !== false) {
-              onLinkChannel(ci);
-            } else if (combined) {
+            if (combined) {
               onSelectChannel(ci);
               drag.current = { ci };
             }
           }}
         />
       ))}
+      {typeof linking === "number" && cursor && shown.includes(linking) && (
+        <line
+          x1={center(linking).x}
+          y1={center(linking).y}
+          x2={cursor.x}
+          y2={cursor.y}
+          className="ghost-line"
+          strokeWidth={2 * box.k}
+          strokeDasharray={`${6 * box.k} ${4 * box.k}`}
+          markerEnd="url(#arrow-ghost)"
+          pointerEvents="none"
+        />
+      )}
       {shown.length === 0 && (
         <text x={box.x + 40} y={box.y + 60} className="node-type">
           Dossier vide : ajoutez un document ou un dossier.
